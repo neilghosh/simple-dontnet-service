@@ -35,6 +35,10 @@ Follow Microsoft's official C# coding style guidelines (https://learn.microsoft.
 
 When making changes to the API or project structure, ensure that the README.md file is updated accordingly. Update the directory structure, endpoint details, and any relevant instructions to reflect the current state of the project.
 
+## Test Summary Documents
+
+**DO NOT** create test summary or test result documents (e.g., TEST_RESULTS.md, TESTING_SUMMARY.md) unless explicitly asked by the user. Testing results should be communicated directly in the conversation. Only create such documentation if the user specifically requests it.
+
 ## Build and Test After Major Refactors
 
 Whenever there is a major refactor (namespace changes, service layer modifications, architecture updates, etc.), follow these steps to ensure everything works:

@@ -8,7 +8,9 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
 
 // Register custom services
-builder.Services.AddScoped<INameService, NameService>();
+builder.Services.AddScoped<IIpAddressService, OutboundIpService>();
+builder.Services.AddScoped<IIpifyProxy, IpifyProxy>();
+builder.Services.AddHttpClient<IpifyProxy>();
 
 var app = builder.Build();
 
