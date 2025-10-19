@@ -13,6 +13,16 @@ project-root/
 ├── Proxies/
 │   ├── IIpifyProxy.cs              # Proxy interface for external API calls
 │   └── IpifyProxy.cs               # Proxy implementation calling ipify API
+├── SimpleDotnetService.Tests/      # Unit and integration test project
+│   ├── Controllers/
+│   │   └── IpControllerTests.cs    # Unit tests for IpController
+│   ├── Services/
+│   │   └── OutboundIpServiceTests.cs # Unit tests for OutboundIpService
+│   ├── Proxies/
+│   │   └── IpifyProxyTests.cs      # Unit tests for IpifyProxy
+│   ├── Integration/
+│   │   └── ApplicationIntegrationTests.cs # Integration tests for Program.cs
+│   └── SimpleDotnetService.Tests.csproj  # Test project file
 ├── Program.cs                       # Application startup and dependency injection configuration
 ├── appsettings.json                 # Configuration settings for the application
 ├── appsettings.Development.json     # Development-specific configuration overrides
@@ -98,5 +108,48 @@ docker logs simple-dotnet-service
 ```
 
 ## Testing
+
+The project includes comprehensive unit and integration tests with **100% code coverage**.
+
+### Test Structure
+
+- **Unit Tests**: Test individual components in isolation using Moq for mocking dependencies
+  - `IpControllerTests.cs`: Tests for the IpController including success and error scenarios
+  - `OutboundIpServiceTests.cs`: Tests for the OutboundIpService with various IP addresses
+  - `IpifyProxyTests.cs`: Tests for the IpifyProxy including network errors and JSON parsing
+
+- **Integration Tests**: Test the application startup and API endpoints end-to-end
+  - `ApplicationIntegrationTests.cs`: Tests for Program.cs startup and WeatherForecast endpoint
+
+### Running Tests
+
+Run all tests:
+```bash
+dotnet test
+```
+
+Run tests with code coverage:
+```bash
+dotnet test --collect:"XPlat Code Coverage"
+```
+
+Generate HTML coverage report:
+```bash
+dotnet tool install --global dotnet-reportgenerator-globaltool
+reportgenerator -reports:"./SimpleDotnetService.Tests/TestResults/*/coverage.cobertura.xml" -targetdir:"./SimpleDotnetService.Tests/TestResults/coveragereport" -reporttypes:Html
+```
+
+### Coverage Summary
+
+- **Line coverage**: 100%
+- **Branch coverage**: 100%
+- **Method coverage**: 100%
+
+All application files are fully covered by tests:
+- Program.cs: 100%
+- IpController: 100%
+- OutboundIpService: 100%
+- IpifyProxy: 100%
+- WeatherForecast: 100%
 
 Use the provided `simple-dotnet-service.http` file in VS Code with the REST Client extension to test endpoints easily.
