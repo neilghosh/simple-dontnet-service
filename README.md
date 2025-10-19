@@ -6,29 +6,34 @@ This project is a simple ASP.NET Core Web API that retrieves the outbound IP add
 ```
 project-root/
 ├── Controllers/
-│   └── IpController.cs          # REST controller defining the GET /api/ip/outbound endpoint
+│   └── IpController.cs             # REST controller defining the GET /api/ip/outbound endpoint
 ├── Services/
-│   ├── IIpAddressService.cs     # Service interface for IP address operations
-│   ├── OutboundIpService.cs     # Service implementation with business logic
-│   ├── IIpifyProxy.cs           # Proxy interface for external API calls
-│   └── IpifyProxy.cs            # Proxy implementation calling ipify API
-├── Program.cs                    # Application startup and dependency injection configuration
-├── appsettings.json              # Configuration settings for the application
-├── appsettings.Development.json  # Development-specific configuration overrides
-├── Dockerfile                    # Multi-stage Docker build configuration
-├── simple-dotnet-service.sln    # Visual Studio solution file
-├── simple-dotnet-service.http   # REST Client test file
-└── README.md                     # Project documentation
+│   ├── IIpAddressService.cs        # Service interface for IP address operations
+│   └── OutboundIpService.cs        # Service implementation with business logic
+├── Proxies/
+│   ├── IIpifyProxy.cs              # Proxy interface for external API calls
+│   └── IpifyProxy.cs               # Proxy implementation calling ipify API
+├── Program.cs                       # Application startup and dependency injection configuration
+├── appsettings.json                 # Configuration settings for the application
+├── appsettings.Development.json     # Development-specific configuration overrides
+├── Dockerfile                       # Multi-stage Docker build configuration
+├── simple-dotnet-service.sln       # Visual Studio solution file
+├── simple-dotnet-service.http      # REST Client test file
+└── README.md                        # Project documentation
 ```
 
 ## Architecture
 
 This project follows a clean layered architecture with clear separation of concerns:
 
-- **Controllers Layer**: Handles HTTP requests and responses (IpController)
-- **Services Layer**: Contains business logic (OutboundIpService)
-- **Proxy Layer**: Abstracts external API calls (IpifyProxy)
-- **Interface Layer**: Defines contracts for all services (IIpAddressService, IIpifyProxy)
+- **Controllers Layer**: Handles HTTP requests and responses (`IpController`)
+- **Services Layer**: Contains business logic (`SimpleDotnetService.Services.Ip` namespace)
+  - `IIpAddressService`: Service interface
+  - `OutboundIpService`: Service implementation
+- **Proxy Layer**: Abstracts external API calls (`SimpleDotnetService.Proxies` namespace - separate from Services)
+  - `IIpifyProxy`: Proxy interface (separate file for better maintainability)
+  - `IpifyProxy`: Proxy implementation calling ipify API
+- **Interface Layer**: All public interfaces defined in separate files from implementations
 
 The project uses:
 - **Dependency Injection**: Services and proxies are registered in `Program.cs` and injected into controllers

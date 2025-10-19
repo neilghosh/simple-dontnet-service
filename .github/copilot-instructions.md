@@ -37,7 +37,22 @@ Follow Microsoft's official C# coding style guidelines (https://learn.microsoft.
 
 ## Updating live documentation in README.md
 
-When making changes to the API or project structure, ensure that the README.md file is updated accordingly. Update the directory structure, endpoint details, and any relevant instructions to reflect the current state of the project.
+**CRITICAL: This step is MANDATORY for ANY project structure or architecture changes.**
+
+When making ANY of the following changes, README.md MUST be updated immediately:
+- Adding or removing folders/files
+- Renaming classes, interfaces, or files
+- Moving code to different namespaces
+- Changing folder structure
+- Adding new layers or components
+- Modifying architecture patterns
+
+Update the directory structure section with:
+- Current folder hierarchy showing all directories
+- File names and their purposes
+- Updated namespace information if changed
+
+This ensures documentation stays in sync with the actual codebase and prevents confusion.
 
 ## Test Summary Documents
 
