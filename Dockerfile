@@ -3,7 +3,7 @@ FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /src
 
 # Copy csproj and restore dependencies
-COPY dev.csproj .
+COPY simple-dotnet-service.csproj .
 RUN dotnet restore
 
 # Copy everything else and build
@@ -25,4 +25,4 @@ ENV ASPNETCORE_ENVIRONMENT=Production
 EXPOSE 8080
 
 # Run the application
-ENTRYPOINT ["dotnet", "dev.dll"]
+ENTRYPOINT ["dotnet", "SimpleDotnetService.dll"]

@@ -34,3 +34,59 @@ Follow Microsoft's official C# coding style guidelines (https://learn.microsoft.
 ## Updating live documentation in README.md
 
 When making changes to the API or project structure, ensure that the README.md file is updated accordingly. Update the directory structure, endpoint details, and any relevant instructions to reflect the current state of the project.
+
+## Build and Test After Major Refactors
+
+Whenever there is a major refactor (namespace changes, service layer modifications, architecture updates, etc.), follow these steps to ensure everything works:
+
+### 1. Build the Project
+```pwsh
+dotnet build simple-dotnet-service.csproj
+```
+Verify build succeeds with no errors or warnings.
+
+### 2. Run the Local Service
+```pwsh
+dotnet run
+```
+The service should start and listen on `http://localhost:5000`.
+
+### 3. Test API Endpoints
+
+**Test without parameters (default value):**
+```pwsh
+Invoke-WebRequest -Uri "http://localhost:5000/api/name" -UseBasicParsing
+```
+Expected: `{"name":"DefaultUser"}` with status 200 OK
+
+**Test with query parameters:**
+```pwsh
+Invoke-WebRequest -Uri "http://localhost:5000/api/name?name=TestValue" -UseBasicParsing
+```
+Expected: `{"name":"TestValue"}` with status 200 OK
+
+### 4. Docker Build and Test (Optional but Recommended)
+```pwsh
+# Build Docker image
+docker build -t simple-dotnet-service:latest .
+
+# Run Docker container
+docker run -d -p 8080:8080 --name simple-dotnet-service simple-dotnet-service:latest
+
+# Test API in Docker
+Invoke-WebRequest -Uri "http://localhost:8080/api/name" -UseBasicParsing
+Invoke-WebRequest -Uri "http://localhost:8080/api/name?name=Docker" -UseBasicParsing
+
+# Cleanup
+docker stop simple-dotnet-service
+docker rm simple-dotnet-service
+```
+
+### 5. Verify All Pass
+✅ Build completes successfully
+✅ Service starts without errors
+✅ API returns correct JSON responses
+✅ Default values work as expected
+✅ Query parameters are properly bound
+✅ HTTP status codes are correct (200 OK)
+✅ Docker image builds and runs successfully (if applicable)

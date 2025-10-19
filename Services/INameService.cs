@@ -1,4 +1,4 @@
-namespace dev.Services
+namespace SimpleDotnetService.Services
 {
     public interface INameService
     {

@@ -1,4 +1,4 @@
-# ASP.NET Core Web API: Name Endpoint
+# ASP.NET Core Web API: Simple Dotnet Service
 
 This project is a simple ASP.NET Core Web API with a GET endpoint at `/api/name` that returns a name in JSON format.
 
@@ -40,27 +40,27 @@ The project uses:
    ```pwsh
    dotnet run
    ```
-3. Access the endpoint at [http://localhost:5166/api/name](http://localhost:5166/api/name) (or the port shown in the console).
+3. Access the endpoint at [http://localhost:5000/api/name](http://localhost:5000/api/name) (or the port shown in the console).
 
 ## API Usage
 
 The `/api/name` endpoint accepts an optional query parameter:
 
-- Without parameter: `http://localhost:5166/api/name` returns `{"name":"YourName"}`
-- With parameter: `http://localhost:5166/api/name?name=John` returns `{"name":"John"}`
+- Without parameter: `http://localhost:5000/api/name` returns `{"name":"DefaultUser"}`
+- With parameter: `http://localhost:5000/api/name?name=John` returns `{"name":"John"}`
 
 ## Docker
 
 ### Build the Docker Image
 
 ```bash
-docker build -t aspnet-name-api:latest .
+docker build -t simple-dotnet-service:latest .
 ```
 
 ### Run the Container
 
 ```bash
-docker run -d -p 8080:8080 --name name-api aspnet-name-api:latest
+docker run -d -p 8080:8080 --name simple-dotnet-service simple-dotnet-service:latest
 ```
 
 ### Test the Containerized API
@@ -73,14 +73,14 @@ curl http://localhost:8080/api/name?name=John
 ### Stop and Remove the Container
 
 ```bash
-docker stop name-api
-docker rm name-api
+docker stop simple-dotnet-service
+docker rm simple-dotnet-service
 ```
 
 ### View Container Logs
 
 ```bash
-docker logs name-api
+docker logs simple-dotnet-service
 ```
 
 ## Project Structure

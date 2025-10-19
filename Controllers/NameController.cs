@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
-using dev.Services;
+using SimpleDotnetService.Services;
 
-namespace dev.Controllers
+namespace SimpleDotnetService.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]

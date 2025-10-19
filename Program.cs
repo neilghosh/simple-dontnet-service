@@ -1,4 +1,4 @@
-using dev.Services;
+using SimpleDotnetService.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
