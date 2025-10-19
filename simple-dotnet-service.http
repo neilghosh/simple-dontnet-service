@@ -1,0 +1,41 @@
+### Simple DotNet Service - HTTP Requests
+### Test endpoints for the Name API
+
+@dev_HostAddress = http://localhost:5000
+@docker_HostAddress = http://localhost:8080
+@baseUrl = {{dev_HostAddress}}
+
+### Get default name
+GET {{baseUrl}}/api/name
+Accept: application/json
+
+###
+
+### Get name with query parameter
+GET {{baseUrl}}/api/name?name=TestUser
+Accept: application/json
+
+###
+
+### Get name with another value
+GET {{baseUrl}}/api/name?name=Alice
+Accept: application/json
+
+###
+
+### Weather Forecast endpoint
+GET {{baseUrl}}/weatherforecast
+Accept: application/json
+
+###
+
+### Swagger/OpenAPI Documentation
+GET {{baseUrl}}/swagger/index.html
+Accept: text/html
+
+###
+
+### Switch to Docker testing (uncomment to use)
+# @baseUrl = {{docker_HostAddress}}
+# GET {{baseUrl}}/api/name
+# Accept: application/json
