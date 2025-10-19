@@ -1,0 +1,31 @@
+# Build results
+bin/
+obj/
+*.dll
+*.exe
+*.pdb
+
+# IDE files
+.vs/
+.vscode/
+*.user
+*.userprefs
+*.sln.iml
+
+# NuGet
+packages/
+*.nupkg
+*.snupkg
+.nuget/
+
+# Runtime
+appsettings.*.json
+!appsettings.json
+!appsettings.Development.json
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log

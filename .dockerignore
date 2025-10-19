@@ -1,0 +1,11 @@
+bin/
+obj/
+.git/
+.gitignore
+.vscode/
+.vs/
+*.md
+Dockerfile
+.dockerignore
+**/.DS_Store
+**/node_modules
