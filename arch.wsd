@@ -1,3 +1,51 @@
-@startuml
-Alic-> Bob: Request
+@startuml Simple DotNet Service Architecture
+
+participant Client as C
+participant "ASP.NET Core\nWeb API" as API
+participant "NameController" as Controller
+participant "INameService" as Service
+participant "NameService" as Implementation
+
+== HTTP Request ==
+C ->> API: GET /api/name\n(Optional: ?name=value)
+activate API
+
+API ->> Controller: Route to NameController
+activate Controller
+
+Controller ->> Service: GetName(name)
+activate Service
+
+Service ->> Implementation: GetName(name)
+activate Implementation
+
+Implementation ->> Implementation: Return name or default
+deactivate Implementation
+
+Service -->> Controller: name value
+deactivate Service
+
+Controller -->> API: IActionResult (200 OK)
+deactivate Controller
+
+== HTTP Response ==
+API -->> C: 200 OK\n{"name": "value"}
+deactivate API
+
+note over C
+  Example Requests:
+  GET /api/name
+  → {"name":"DefaultUser"}
+  
+  GET /api/name?name=TestValue
+  → {"name":"TestValue"}
+end note
+
+note over API
+  Environment: Development/Production
+  Port: 5000 (local), 8080 (Docker)
+  Framework: .NET 8.0
+  OpenAPI: Swagger/Swashbuckle
+end note
+
 @enduml
