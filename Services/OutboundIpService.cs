@@ -1,4 +1,6 @@
-namespace SimpleDotnetService.Services
+using SimpleDotnetService.Proxies;
+
+namespace SimpleDotnetService.Services.Ip
 {
     public class OutboundIpService : IIpAddressService
     {

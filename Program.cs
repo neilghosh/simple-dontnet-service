@@ -1,4 +1,6 @@
 using SimpleDotnetService.Services;
+using SimpleDotnetService.Services.Ip;
+using SimpleDotnetService.Proxies;
 
 var builder = WebApplication.CreateBuilder(args);
 

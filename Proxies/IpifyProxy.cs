@@ -1,12 +1,7 @@
 using System.Text.Json;
 
-namespace SimpleDotnetService.Services
+namespace SimpleDotnetService.Proxies
 {
-    public interface IIpifyProxy
-    {
-        Task<string> GetIpAsync();
-    }
-
     public class IpifyProxy : IIpifyProxy
     {
         private readonly HttpClient httpClient;

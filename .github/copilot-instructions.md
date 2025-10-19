@@ -10,6 +10,10 @@ This is an ASP.NET Core Web API project using layered architecture with dependen
 - Use async/await patterns for service methods
 - Include proper logging and error handling
 - Register services in Program.cs using appropriate lifetime (Scoped, Singleton, Transient)
+- **Always place interface definitions in separate files** from their implementations
+  - Example: `IIpifyProxy.cs` contains only the interface definition
+  - Example: `IpifyProxy.cs` contains only the implementation class
+  - This improves maintainability and follows single responsibility principle
 
 ## C# Coding Style Guidelines
 
