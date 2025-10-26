@@ -2,43 +2,93 @@
 
 participant Client as C
 participant "ASP.NET Core\nWeb API" as API
-participant "NameController" as Controller
-participant "INameService" as Service
-participant "NameService" as Implementation
+participant "IpController" as Controller
+participant "IIpAddressService" as Service
+participant "OutboundIpService" as ServiceImpl
+participant "IIpifyProxy" as Proxy
+participant "IpifyProxy" as ProxyImpl
+participant "External API\n(api.ipify.org)" as ExtAPI
 
-== HTTP Request ==
-C ->> API: GET /api/name\n(Optional: ?name=value)
+== HTTP Request: Get Outbound IP ==
+C ->> API: GET /api/ip/outbound
 activate API
 
-API ->> Controller: Route to NameController
+API ->> Controller: Route to IpController
 activate Controller
 
-Controller ->> Service: GetName(name)
+Controller ->> Service: GetOutboundIpAsync()
 activate Service
 
-Service ->> Implementation: GetName(name)
-activate Implementation
+Service ->> ServiceImpl: GetOutboundIpAsync()
+activate ServiceImpl
 
-Implementation ->> Implementation: Return name or default
-deactivate Implementation
+ServiceImpl ->> Proxy: GetIpAsync()
+activate Proxy
 
-Service -->> Controller: name value
+Proxy ->> ProxyImpl: GetIpAsync()
+activate ProxyImpl
+
+ProxyImpl ->> ExtAPI: HTTP GET
+activate ExtAPI
+ExtAPI -->> ProxyImpl: IP Address
+deactivate ExtAPI
+
+ProxyImpl -->> Proxy: IP Address
+deactivate ProxyImpl
+
+Proxy -->> ServiceImpl: IP Address
+deactivate Proxy
+
+ServiceImpl -->> Service: IP Address
+deactivate ServiceImpl
+
+Service -->> Controller: IP Address
 deactivate Service
 
-Controller -->> API: IActionResult (200 OK)
+Controller -->> API: 200 OK
 deactivate Controller
 
-== HTTP Response ==
-API -->> C: 200 OK\n{"name": "value"}
+API -->> C: {"outboundip": "203.0.113.42"}
+deactivate API
+
+== HTTP Request: Get Inbound IP ==
+C ->> API: GET /api/ip/inbound
+activate API
+
+API ->> Controller: Route to IpController
+activate Controller
+
+Controller ->> Controller: Get HttpContext.Connection.RemoteIpAddress
+Controller -->> API: 200 OK
+deactivate Controller
+
+API -->> C: {"inboundip": "::1"}
+deactivate API
+
+== HTTP Request: Get Headers ==
+C ->> API: GET /api/ip/headers
+activate API
+
+API ->> Controller: Route to IpController
+activate Controller
+
+Controller ->> Controller: Get HttpContext.Request.Headers
+Controller -->> API: 200 OK
+deactivate Controller
+
+API -->> C: {"Host": "...", "User-Agent": "..."}
 deactivate API
 
 note over C
-  Example Requests:
-  GET /api/name
-  → {"name":"DefaultUser"}
+  Example Endpoints:
+  GET /api/ip/outbound
+  → {"outboundip":"203.0.113.42"}
   
-  GET /api/name?name=TestValue
-  → {"name":"TestValue"}
+  GET /api/ip/inbound
+  → {"inboundip":"::1"}
+  
+  GET /api/ip/headers
+  → {"Host":"localhost:5000",...}
 end note
 
 note over API
@@ -46,6 +96,12 @@ note over API
   Port: 5000 (local), 8080 (Docker)
   Framework: .NET 8.0
   OpenAPI: Swagger/Swashbuckle
+  
+  Layers:
+  - Controllers: IpController
+  - Services: IIpAddressService, OutboundIpService
+  - Proxies: IIpifyProxy, IpifyProxy
+  - Tests: xUnit unit & integration tests
 end note
 
 @enduml

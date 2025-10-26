@@ -34,6 +34,7 @@ Follow Microsoft's official C# coding style guidelines (https://learn.microsoft.
 - Avoid abbreviations except for widely known ones
 - Avoid single-letter names (except for simple loop counters)
 - Use 'this' keyword when accessing instance members to avoid ambiguity
+- Do not create MD files unless explicitly requested by the user
 
 ## Updating live documentation in README.md
 
@@ -53,6 +54,43 @@ Update the directory structure section with:
 - Updated namespace information if changed
 
 This ensures documentation stays in sync with the actual codebase and prevents confusion.
+
+## Architecture Diagram Updates
+
+**CRITICAL: Update architecture diagrams for every pull request.**
+
+Whenever a pull request is raised (including changes made by delegated GitHub actions), you MUST:
+
+1. **Review the changes** in the PR to identify architectural impacts:
+   - New or removed components (Controllers, Services, Proxies, etc.)
+   - New or removed dependencies between components
+   - Changes to data flow or communication patterns
+   - New or modified endpoints or APIs
+
+2. **Update the architecture diagram** if ANY of the following occurred:
+   - Added or removed classes, interfaces, or services
+   - Changed dependency relationships
+   - Modified the layered architecture structure
+   - Added or changed external API integrations
+   - Added or changed database connections
+   - Modified the request/response flow
+
+3. **Architecture diagram files to update:**
+   - `arch.wsd` - PlantUML/WebSequenceDiagrams source file
+   - `Simple DotNet Service Architecture.png` - Generated diagram image
+   - Any other architecture documentation files in the repository
+
+4. **How to update:**
+   - Edit the `arch.wsd` file to reflect the new architecture
+   - Regenerate the PNG diagram from the updated source
+   - Ensure the diagram accurately represents the current state of the codebase
+   - Include diagram updates in the same PR or as a follow-up commit
+
+5. **When to skip:**
+   - Only skip diagram updates if changes are purely cosmetic (comments, formatting)
+   - Only skip if changes are in test code that don't affect the main architecture
+
+**Note:** This applies to ALL PRs, including those created by automated processes, GitHub Actions, or any delegated workflows.
 
 ## Test Summary Documents
 
