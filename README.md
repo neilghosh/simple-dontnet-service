@@ -267,69 +267,74 @@ The test suite includes:
 
 ## Azure Deployment
 
-This project includes automated CI/CD deployment to Azure Container Instances using GitHub Actions.
+This project includes automated CI/CD deployment to Azure using GitHub Actions. Choose the deployment option that best fits your needs:
 
-### Quick Start
+### Deployment Options
 
-- **5-Minute Setup Guide**: See [QUICKSTART.md](QUICKSTART.md) for rapid deployment
-- **Detailed Documentation**: See [AZURE_DEPLOYMENT.md](AZURE_DEPLOYMENT.md) for comprehensive guide
+#### Option 1: Azure App Service (Recommended)
+**Best for: Production applications, HTTPS support, custom domains**
 
-### Overview
+- **5-Minute Setup Guide**: See [docs/AZURE_APP_SERVICE_QUICKSTART.md](docs/AZURE_APP_SERVICE_QUICKSTART.md)
+- **Detailed Documentation**: See [docs/AZURE_APP_SERVICE_DEPLOYMENT.md](docs/AZURE_APP_SERVICE_DEPLOYMENT.md)
 
-The deployment pipeline:
-- ✅ Builds and tests the .NET application
-- ✅ Creates a Docker container image
-- ✅ Pushes to Azure Container Registry
-- ✅ Deploys to Azure Container Instances
+**Key Benefits:**
+- ✅ Built-in HTTPS support on port 443
+- ✅ Automatic SSL/TLS certificates
+- ✅ Custom domain support
+- ✅ Deployment slots for zero-downtime updates
+- ✅ Integrated monitoring and scaling
+- ✅ Fully managed platform
 
-### Cost-Effective Serverless Deployment
-
-Azure Container Instances provides:
-- **Pay-per-second billing** - Only pay when running
-- **No always-on costs** - Stop containers when not needed
-- **Serverless hosting** - No infrastructure management
-- **Docker compatibility** - Reusable containers
-
-### Prerequisites
-
-1. Azure subscription
-2. Azure Container Registry
-3. GitHub repository secrets configured
-
-### Workflow Triggers
-
-The CI/CD pipeline runs on:
-- Push to `main` branch (builds, tests, and deploys)
-- Pull requests (builds and tests only)
-- Manual workflow dispatch
-
-### Testing Deployed Service
-
-Once deployed, access your API endpoints:
-
+**Quick Test:**
 ```bash
-# The GitHub Actions workflow outputs the container URL
-# Example: http://simple-dotnet-service-123.eastus.azurecontainer.io:8080
+# After deployment, test with HTTPS
+curl https://<your-app-name>.azurewebsites.net/api/ip/outbound
+curl https://<your-app-name>.azurewebsites.net/api/ip/inbound
+curl https://<your-app-name>.azurewebsites.net/api/ip/headers
+```
 
+#### Option 2: Azure Container Instances
+**Best for: Pay-per-second billing, Docker-first deployment**
+
+- **5-Minute Setup Guide**: See [docs/QUICKSTART.md](docs/QUICKSTART.md)
+- **Detailed Documentation**: See [docs/AZURE_DEPLOYMENT.md](docs/AZURE_DEPLOYMENT.md)
+
+**Key Benefits:**
+- ✅ Pay-per-second billing
+- ✅ No always-on costs
+- ✅ Serverless hosting
+- ✅ Docker compatibility
+
+**Quick Test:**
+```bash
+# After deployment, test with HTTP
 curl http://<your-container-url>:8080/api/ip/outbound
 curl http://<your-container-url>:8080/api/ip/inbound
 curl http://<your-container-url>:8080/api/ip/headers
 ```
 
-### Managing Your Deployment
+### Comparison
 
-```bash
-# View container logs
-az container logs --resource-group <rg-name> --name simple-dotnet-service-aci
+| Feature | App Service | Container Instances |
+|---------|-------------|---------------------|
+| HTTPS Support | Built-in (port 443) | Supported, requires setup |
+| SSL Certificates | Automatic, managed | Manual configuration |
+| Custom Domains | Native support | Requires additional configuration |
+| Deployment Slots | Yes (Standard+) | No |
+| Cost Model | Fixed monthly | Pay-per-second |
+| Best For | Production apps | Dev/test, batch jobs |
 
-# Stop container (saves costs)
-az container stop --resource-group <rg-name> --name simple-dotnet-service-aci
+### Workflow Triggers
 
-# Start container
-az container start --resource-group <rg-name> --name simple-dotnet-service-aci
+Both deployment pipelines run on:
+- Push to `main` branch (builds, tests, and deploys)
+- Pull requests (builds and tests only)
+- Manual workflow dispatch
 
-# Delete container
-az container delete --resource-group <rg-name> --name simple-dotnet-service-aci
-```
+### Prerequisites
 
-For complete setup and troubleshooting guide, see [AZURE_DEPLOYMENT.md](AZURE_DEPLOYMENT.md).
+1. Azure subscription
+2. Azure CLI installed
+3. GitHub repository secrets configured
+
+For complete setup and troubleshooting guides, see the documentation links above.
