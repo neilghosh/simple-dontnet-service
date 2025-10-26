@@ -317,9 +317,9 @@ curl http://<your-container-url>:8080/api/ip/headers
 
 | Feature | App Service | Container Instances |
 |---------|-------------|---------------------|
-| HTTPS Support | Built-in (port 443) | Requires reverse proxy |
-| SSL Certificates | Automatic, managed | Manual setup |
-| Custom Domains | Native support | Requires configuration |
+| HTTPS Support | Built-in (port 443) | Supported, requires setup |
+| SSL Certificates | Automatic, managed | Manual configuration |
+| Custom Domains | Native support | Requires additional configuration |
 | Deployment Slots | Yes (Standard+) | No |
 | Cost Model | Fixed monthly | Pay-per-second |
 | Best For | Production apps | Dev/test, batch jobs |

@@ -116,7 +116,7 @@ curl https://$WEBAPP_NAME.azurewebsites.net/api/ip/headers
 ## Common Issues
 
 ### Issue: "The name is not available"
-**Solution**: Choose a different WEBAPP_NAME - it must be globally unique across all Azure
+**Solution**: Choose a different WEBAPP_NAME - it must be globally unique across all Azure App Services
 
 ### Issue: "AZURE_CREDENTIALS invalid"
 **Solution**: Ensure you copied the ENTIRE JSON output from service principal creation, including curly braces
@@ -136,7 +136,7 @@ az webapp update --name $WEBAPP_NAME --resource-group $RESOURCE_GROUP --https-on
 ## Cost Management
 
 ### App Service Plan Pricing
-- **Free (F1)**: Free, 60 min/day compute (no SSL/custom domains)
+- **Free (F1)**: Free, 60 CPU min/day allocation (no SSL/custom domains)
 - **Basic (B1)**: ~$13/month, includes SSL and custom domains
 - **Standard (S1)**: ~$70/month, includes deployment slots and autoscaling
 

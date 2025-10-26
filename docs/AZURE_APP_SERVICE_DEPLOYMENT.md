@@ -24,7 +24,7 @@ Azure App Service offers several advantages over Container Instances:
 ### Cost Considerations
 
 Azure App Service pricing depends on the App Service Plan:
-- **Free Tier**: 60 minutes/day compute time, great for testing
+- **Free Tier**: 60 CPU minutes/day allocation, great for testing
 - **Basic B1**: ~$13/month, includes custom domains and SSL
 - **Standard S1**: ~$70/month, includes deployment slots and autoscaling
 - **Premium**: Enhanced performance and advanced features
@@ -408,15 +408,15 @@ Monitor costs in Azure Portal:
 
 | Feature | App Service | Container Instances |
 |---------|-------------|---------------------|
-| HTTPS Support | Built-in, automatic | Requires reverse proxy |
-| Custom Domains | Native support | Requires configuration |
-| SSL Certificates | Automatic, managed | Manual setup |
+| HTTPS Support | Built-in, automatic | Supported, requires setup |
+| Custom Domains | Native support | Requires additional configuration |
+| SSL Certificates | Automatic, managed | Manual configuration |
 | Deployment Slots | Yes (Standard+) | No |
-| Auto-scaling | Yes (Standard+) | Manual |
+| Auto-scaling | Yes (Standard+) | Manual scaling |
 | Monitoring | Application Insights | Container logs |
-| Port 443 | Default for HTTPS | Requires configuration |
+| Port 443 | Default for HTTPS | Configurable |
 | Cost | Fixed monthly | Pay-per-second |
-| Management | Fully managed | Semi-managed |
+| Management | Fully managed | Container-managed |
 
 ## Additional Resources
 
