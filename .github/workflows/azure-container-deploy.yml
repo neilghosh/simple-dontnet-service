@@ -1,5 +1,9 @@
 name: Build and Deploy to Azure Container Instances
 
+# This workflow runs on:
+# - Pull requests to main (build and test only)
+# - Pushes to main (build, test, and deploy)
+# - Manual trigger via workflow_dispatch
 on:
   push:
     branches:
