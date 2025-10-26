@@ -35,6 +35,7 @@ project-root/
 ├── arch.wsd                                  # Architecture diagram source (PlantUML)
 ├── Simple DotNet Service Architecture.png    # Architecture diagram image
 ├── AZURE_DEPLOYMENT.md                       # Azure deployment setup guide
+├── QUICKSTART.md                             # 5-minute Azure deployment quickstart
 ├── simple-dotnet-service.sln                # Visual Studio solution file
 ├── simple-dotnet-service.http               # REST Client test file
 └── README.md                                 # Project documentation
@@ -270,7 +271,8 @@ This project includes automated CI/CD deployment to Azure Container Instances us
 
 ### Quick Start
 
-For detailed setup instructions, see [AZURE_DEPLOYMENT.md](AZURE_DEPLOYMENT.md).
+- **5-Minute Setup Guide**: See [QUICKSTART.md](QUICKSTART.md) for rapid deployment
+- **Detailed Documentation**: See [AZURE_DEPLOYMENT.md](AZURE_DEPLOYMENT.md) for comprehensive guide
 
 ### Overview
 
