@@ -33,5 +33,38 @@ namespace SimpleDotnetService.Controllers
                 return StatusCode(500, new { error = "An error occurred while retrieving the outbound IP address" });
             }
         }
+
+        [HttpGet("inbound")]
+        public IActionResult GetInboundIp()
+        {
+            try
+            {
+                logger.LogInformation("Received request to get inbound (remote) IP address");
+
+                var remoteIp = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "Unknown";
+                return Ok(new { inboundip = remoteIp });
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error occurred while getting inbound IP address");
+                return StatusCode(500, new { error = "An error occurred while retrieving the inbound IP address" });
+            }
+        }
+        [HttpGet("headers")]
+        public IActionResult GetHeaders()
+        {
+            try
+            {
+                logger.LogInformation("Received request to get request headers");
+                var headers = HttpContext.Request.Headers
+                    .ToDictionary(h => h.Key, h => h.Value.ToString());
+                return Ok(headers);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error occurred while getting headers");
+                return StatusCode(500, new { error = "An error occurred while retrieving the headers" });
+            }
+        }
     }
 }

@@ -34,6 +34,7 @@ Follow Microsoft's official C# coding style guidelines (https://learn.microsoft.
 - Avoid abbreviations except for widely known ones
 - Avoid single-letter names (except for simple loop counters)
 - Use 'this' keyword when accessing instance members to avoid ambiguity
+- Do not create MD files unless explicitly requested by the user
 
 ## Updating live documentation in README.md
 
