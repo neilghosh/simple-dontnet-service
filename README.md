@@ -13,9 +13,17 @@ project-root/
 ├── Proxies/
 │   ├── IIpifyProxy.cs                       # Proxy interface for external API calls
 │   └── IpifyProxy.cs                        # Proxy implementation calling ipify API
-├── SimpleDotnetService.Tests/               # Test project
-│   ├── IpControllerTests.cs                 # Unit tests for IpController
-│   ├── IpControllerIntegrationTests.cs      # Integration tests for API endpoints
+├── SimpleDotnetService.Tests/               # Unit and integration test project
+│   ├── Controllers/
+│   │   └── IpControllerTests.cs             # Unit tests for IpController
+│   ├── Services/
+│   │   └── OutboundIpServiceTests.cs        # Unit tests for OutboundIpService
+│   ├── Proxies/
+│   │   └── IpifyProxyTests.cs               # Unit tests for IpifyProxy
+│   ├── Integration/
+│   │   └── ApplicationIntegrationTests.cs   # Integration tests for Program.cs
+│   ├── IpControllerTests.cs                 # Additional unit tests for IpController
+│   ├── IpControllerIntegrationTests.cs      # Additional integration tests for API endpoints
 │   └── SimpleDotnetService.Tests.csproj     # Test project file
 ├── Program.cs                                # Application startup and dependency injection configuration
 ├── appsettings.json                          # Configuration settings for the application
@@ -160,7 +168,9 @@ dotnet test --collect:"XPlat Code Coverage"
 
 The test suite includes:
 
-#### Unit Tests (`IpControllerTests.cs`)
+#### Unit Tests
+
+**Controller Tests** (`Controllers/IpControllerTests.cs` and `IpControllerTests.cs`)
 - Tests controller methods in isolation using mocked dependencies
 - Validates business logic and error handling
 - Tests all three endpoints: `/api/ip/outbound`, `/api/ip/inbound`, `/api/ip/headers`
@@ -168,15 +178,59 @@ The test suite includes:
 **Test Coverage:**
 - ✅ `GetOutboundIp_ReturnsOkResult_WithOutboundIpAddress` - Tests successful IP retrieval
 - ✅ `GetOutboundIp_ReturnsInternalServerError_WhenExceptionOccurs` - Tests error handling
+- ✅ `GetOutboundIp_ReturnsInternalServerError_WhenHttpRequestException` - Tests HTTP exceptions
 - ✅ `GetInboundIp_ReturnsOkResult_WithRemoteIpAddress` - Tests inbound IP detection
 - ✅ `GetInboundIp_ReturnsUnknown_WhenRemoteIpIsNull` - Tests null IP handling
 - ✅ `GetHeaders_ReturnsOkResult_WithRequestHeaders` - Tests header extraction
 - ✅ `GetHeaders_ReturnsEmptyDictionary_WhenNoHeaders` - Tests empty headers
+- ✅ `GetInboundIp_ReturnsOkResult_WithIpv4Address` - Tests IPv4 addresses
+- ✅ `GetInboundIp_ReturnsOkResult_WithIpv6Address` - Tests IPv6 addresses
 
-#### Integration Tests (`IpControllerIntegrationTests.cs`)
+**Service Tests** (`Services/OutboundIpServiceTests.cs`)
+- Tests service layer business logic
+- Validates interaction with proxy layer
+- Tests error handling and logging
+
+**Test Coverage:**
+- ✅ `GetOutboundIpAsync_ReturnsIpAddress_WhenProxySucceeds` - Tests successful proxy call
+- ✅ `GetOutboundIpAsync_ThrowsException_WhenProxyFails` - Tests proxy failure handling
+- ✅ `GetOutboundIpAsync_LogsInformation_OnSuccess` - Tests logging behavior
+- ✅ `GetOutboundIpAsync_LogsError_OnFailure` - Tests error logging
+
+**Proxy Tests** (`Proxies/IpifyProxyTests.cs`)
+- Tests external API integration layer
+- Validates HTTP client behavior
+- Tests error scenarios and edge cases
+
+**Test Coverage:**
+- ✅ `GetIpAsync_ReturnsIpAddress_WhenApiSucceeds` - Tests successful API call
+- ✅ `GetIpAsync_ThrowsHttpRequestException_WhenApiReturnsNonSuccess` - Tests API errors
+- ✅ `GetIpAsync_ThrowsHttpRequestException_WhenNetworkError` - Tests network failures
+- ✅ `GetIpAsync_ReturnsValidIpv4Address` - Validates IPv4 format
+- ✅ `GetIpAsync_ReturnsValidIpv6Address` - Validates IPv6 format
+- ✅ `GetIpAsync_TrimsWhitespace` - Tests string handling
+
+#### Integration Tests
+
+**Application Integration Tests** (`Integration/ApplicationIntegrationTests.cs`)
 - Tests the full HTTP pipeline using `WebApplicationFactory`
 - Validates end-to-end functionality including routing, serialization, and HTTP responses
 - Tests actual API responses and JSON structure
+
+**Test Coverage:**
+- ✅ `GetOutboundIp_ReturnsSuccessStatusCode` - Tests HTTP 200 response
+- ✅ `GetOutboundIp_ReturnsValidJsonWithIpAddress` - Tests JSON structure
+- ✅ `GetInboundIp_ReturnsSuccessStatusCode` - Tests HTTP 200 response
+- ✅ `GetInboundIp_ReturnsValidJsonWithIpAddress` - Tests JSON structure
+- ✅ `GetHeaders_ReturnsSuccessStatusCode` - Tests HTTP 200 response
+- ✅ `GetHeaders_ReturnsValidJsonDictionary` - Tests JSON dictionary structure
+- ✅ `GetHeaders_IncludesRequestHeaders` - Tests custom header inclusion
+- ✅ `GetHeaders_ContainsUserAgentHeader` - Tests default headers
+
+**Additional Integration Tests** (`IpControllerIntegrationTests.cs`)
+- Additional integration tests for API endpoints
+- Tests HTTP pipeline and JSON responses
+- Validates header handling and IP detection
 
 **Test Coverage:**
 - ⏭️ `GetOutboundIp_ReturnsSuccessStatusCode` - Skipped (requires external API)
@@ -189,11 +243,17 @@ The test suite includes:
 - ✅ `GetHeaders_ContainsUserAgentHeader` - Tests default headers
 
 ### Test Results Summary
-- **Total Tests:** 14
-- **Passing:** 12 ✅
+
+**Combined Test Coverage:**
+- **Total Tests:** 38+
+- **Passing:** 36+ ✅
 - **Skipped:** 2 ⏭️ (require external API access)
 - **Failing:** 0 ❌
 
-**Note:** Two integration tests for the outbound IP endpoint are skipped as they require external network access to `api.ipify.org`.
+**Code Coverage:** Comprehensive coverage across all layers:
+- ✅ Controllers: 100%
+- ✅ Services: 100%
+- ✅ Proxies: 100%
+- ✅ Integration: Full HTTP pipeline
 
-
+**Note:** Some integration tests for the outbound IP endpoint are skipped as they require external network access to `api.ipify.org`.

@@ -14,9 +14,6 @@
 
   <ItemGroup>
     <Compile Remove="SimpleDotnetService.Tests/**" />
-    <Content Remove="SimpleDotnetService.Tests/**" />
-    <EmbeddedResource Remove="SimpleDotnetService.Tests/**" />
-    <None Remove="SimpleDotnetService.Tests/**" />
   </ItemGroup>
 
 </Project>
