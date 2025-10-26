@@ -98,9 +98,14 @@ jobs:
           --name ${{ env.AZURE_WEBAPP_NAME }} \
           --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
           --docker-custom-image-name ${{ env.AZURE_CONTAINER_REGISTRY }}/${{ env.IMAGE_NAME }}:latest \
-          --docker-registry-server-url https://${{ env.AZURE_CONTAINER_REGISTRY }} \
-          --docker-registry-server-username 00000000-0000-0000-0000-000000000000 \
-          --docker-registry-server-password "$(az account get-access-token --query accessToken -o tsv)"
+          --docker-registry-server-url https://${{ env.AZURE_CONTAINER_REGISTRY }}
+    
+    - name: Enable Managed Identity for ACR access
+      run: |
+        az webapp identity assign \
+          --name ${{ env.AZURE_WEBAPP_NAME }} \
+          --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+          --identities [system]
     
     - name: Restart App Service
       run: |
