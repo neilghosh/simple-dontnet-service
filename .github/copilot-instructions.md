@@ -34,7 +34,39 @@ Follow Microsoft's official C# coding style guidelines (https://learn.microsoft.
 - Avoid abbreviations except for widely known ones
 - Avoid single-letter names (except for simple loop counters)
 - Use 'this' keyword when accessing instance members to avoid ambiguity
-- Do not create MD files unless explicitly requested by the user
+
+## Documentation Files Policy
+
+**⚠️ STRICT RULE: DO NOT CREATE MARKDOWN FILES**
+
+### Exception: Only create .md files if user EXPLICITLY requests it
+
+**DO NOT create MD files for:**
+- ❌ Setup guides
+- ❌ Deployment summaries
+- ❌ Cleanup procedures
+- ❌ Index or navigation files
+- ❌ Quickstart guides
+- ❌ Troubleshooting documents
+- ❌ Configuration instructions
+- ❌ Any explanatory documentation
+
+**What to do instead:**
+- ✅ Provide information directly in conversation/chat
+- ✅ Use terminal output to show results
+- ✅ Reference existing documentation
+- ✅ Give commands and instructions as text in responses
+- ✅ Only use create_file tool for code files (.cs, .json, .yml, etc.)
+
+**Existing MD files:**
+- Only README.md should remain in root
+- All other .md files are in `/docs` directory
+- Reference docs folder when needed: `See docs/GITHUB_SECRETS_SETUP.md`
+
+**When user requests documentation:**
+- Ask: "Should I create this as a markdown file or provide it in the conversation?"
+- Wait for explicit confirmation before creating .md files
+- Default action: provide information in chat only
 
 ## Updating live documentation in README.md
 
