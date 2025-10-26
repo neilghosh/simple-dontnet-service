@@ -21,7 +21,7 @@ az login
 ```bash
 # Set variables (customize these)
 RESOURCE_GROUP="simple-dotnet-service-rg"
-REGISTRY_NAME="youruniqueregistryname"  # Must be globally unique, lowercase alphanumeric only
+REGISTRY_NAME="youruniqueregistryname"  # Must be globally unique, lowercase letters and numbers only (no hyphens, underscores, or special characters)
 LOCATION="eastus"
 
 # Create resource group
@@ -149,7 +149,7 @@ az group delete --name $RESOURCE_GROUP --yes
 ## Getting Help
 
 - **Detailed Guide**: [AZURE_DEPLOYMENT.md](AZURE_DEPLOYMENT.md)
-- **Azure Docs**: https://docs.microsoft.com/azure/container-instances/
+- **Azure Docs**: https://learn.microsoft.com/azure/container-instances/
 - **GitHub Actions Logs**: Check the Actions tab in your repository
 
 ## What's Next?

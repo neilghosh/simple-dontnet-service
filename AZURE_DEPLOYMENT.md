@@ -43,7 +43,7 @@ az group create \
 ### 2. Create Azure Container Registry
 
 ```bash
-# Create container registry (name must be globally unique, lowercase alphanumeric only)
+# Create container registry (name must be globally unique, lowercase letters and numbers only - no hyphens, underscores, or special characters)
 az acr create \
   --resource-group simple-dotnet-service-rg \
   --name <your-unique-registry-name> \
@@ -311,6 +311,6 @@ Monitor costs in Azure Portal:
 
 ## Additional Resources
 
-- [Azure Container Instances Documentation](https://docs.microsoft.com/azure/container-instances/)
-- [Azure Container Registry Documentation](https://docs.microsoft.com/azure/container-registry/)
+- [Azure Container Instances Documentation](https://learn.microsoft.com/azure/container-instances/)
+- [Azure Container Registry Documentation](https://learn.microsoft.com/azure/container-registry/)
 - [GitHub Actions for Azure](https://github.com/Azure/actions)
