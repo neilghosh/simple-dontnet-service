@@ -33,13 +33,13 @@ jobs:
         dotnet-version: ${{ env.DOTNET_VERSION }}
     
     - name: Restore dependencies
-      run: dotnet restore simple-dotnet-service.csproj
+      run: dotnet restore simple-dotnet-service.sln
     
     - name: Build
-      run: dotnet build simple-dotnet-service.csproj --configuration Release --no-restore
+      run: dotnet build simple-dotnet-service.sln --configuration Release --no-restore
     
     - name: Run tests
-      run: dotnet test --no-build --verbosity normal --configuration Release
+      run: dotnet test simple-dotnet-service.sln --no-build --verbosity normal --configuration Release
 
   build-and-push-docker:
     runs-on: ubuntu-latest
