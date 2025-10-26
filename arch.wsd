@@ -93,7 +93,7 @@ end note
 
 note over API
   Environment: Development/Production
-  Port: 5000 (local), 8080 (Docker)
+  Port: 5000 (local), 8080 (Docker/ACI)
   Framework: .NET 8.0
   OpenAPI: Swagger/Swashbuckle
   
@@ -102,6 +102,43 @@ note over API
   - Services: IIpAddressService, OutboundIpService
   - Proxies: IIpifyProxy, IpifyProxy
   - Tests: xUnit unit & integration tests
+  
+  Deployment:
+  - Local: dotnet run
+  - Docker: docker run
+  - Azure: Container Instances (ACI)
+end note
+
+== CI/CD Deployment Flow ==
+participant "GitHub Actions" as GHA
+participant "Azure Container\nRegistry (ACR)" as ACR
+participant "Azure Container\nInstances (ACI)" as ACI
+
+note over GHA
+  Trigger: Push to main or manual
+  Steps:
+  1. Build & Test .NET app
+  2. Build Docker image
+  3. Push to ACR
+  4. Deploy to ACI
+end note
+
+GHA -> GHA: dotnet build & test
+GHA -> ACR: docker push
+GHA -> ACI: Deploy container
+ACI -> ACR: Pull image
+ACI -> ACI: Run container
+
+note over ACI
+  Serverless Container Hosting
+  - Pay-per-second billing
+  - Auto-scaling
+  - Public IP with DNS
+  - Port: 8080
+  
+  Cost Optimization:
+  - Stop when not in use
+  - No always-on charges
 end note
 
 @enduml

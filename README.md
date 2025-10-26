@@ -5,6 +5,9 @@ This project is a simple ASP.NET Core Web API that retrieves the outbound IP add
 ## Directory Structure
 ```
 project-root/
+├── .github/
+│   └── workflows/
+│       └── azure-container-deploy.yml       # CI/CD pipeline for Azure deployment
 ├── Controllers/
 │   └── IpController.cs                      # REST controller with IP endpoints
 ├── Services/
@@ -29,6 +32,10 @@ project-root/
 ├── appsettings.json                          # Configuration settings for the application
 ├── appsettings.Development.json              # Development-specific configuration overrides
 ├── Dockerfile                                # Multi-stage Docker build configuration
+├── arch.wsd                                  # Architecture diagram source (PlantUML)
+├── Simple DotNet Service Architecture.png    # Architecture diagram image
+├── AZURE_DEPLOYMENT.md                       # Azure deployment setup guide
+├── QUICKSTART.md                             # 5-minute Azure deployment quickstart
 ├── simple-dotnet-service.sln                # Visual Studio solution file
 ├── simple-dotnet-service.http               # REST Client test file
 └── README.md                                 # Project documentation
@@ -257,3 +264,72 @@ The test suite includes:
 - ✅ Integration: Full HTTP pipeline
 
 **Note:** Some integration tests for the outbound IP endpoint are skipped as they require external network access to `api.ipify.org`.
+
+## Azure Deployment
+
+This project includes automated CI/CD deployment to Azure Container Instances using GitHub Actions.
+
+### Quick Start
+
+- **5-Minute Setup Guide**: See [QUICKSTART.md](QUICKSTART.md) for rapid deployment
+- **Detailed Documentation**: See [AZURE_DEPLOYMENT.md](AZURE_DEPLOYMENT.md) for comprehensive guide
+
+### Overview
+
+The deployment pipeline:
+- ✅ Builds and tests the .NET application
+- ✅ Creates a Docker container image
+- ✅ Pushes to Azure Container Registry
+- ✅ Deploys to Azure Container Instances
+
+### Cost-Effective Serverless Deployment
+
+Azure Container Instances provides:
+- **Pay-per-second billing** - Only pay when running
+- **No always-on costs** - Stop containers when not needed
+- **Serverless hosting** - No infrastructure management
+- **Docker compatibility** - Reusable containers
+
+### Prerequisites
+
+1. Azure subscription
+2. Azure Container Registry
+3. GitHub repository secrets configured
+
+### Workflow Triggers
+
+The CI/CD pipeline runs on:
+- Push to `main` branch (builds, tests, and deploys)
+- Pull requests (builds and tests only)
+- Manual workflow dispatch
+
+### Testing Deployed Service
+
+Once deployed, access your API endpoints:
+
+```bash
+# The GitHub Actions workflow outputs the container URL
+# Example: http://simple-dotnet-service-123.eastus.azurecontainer.io:8080
+
+curl http://<your-container-url>:8080/api/ip/outbound
+curl http://<your-container-url>:8080/api/ip/inbound
+curl http://<your-container-url>:8080/api/ip/headers
+```
+
+### Managing Your Deployment
+
+```bash
+# View container logs
+az container logs --resource-group <rg-name> --name simple-dotnet-service-aci
+
+# Stop container (saves costs)
+az container stop --resource-group <rg-name> --name simple-dotnet-service-aci
+
+# Start container
+az container start --resource-group <rg-name> --name simple-dotnet-service-aci
+
+# Delete container
+az container delete --resource-group <rg-name> --name simple-dotnet-service-aci
+```
+
+For complete setup and troubleshooting guide, see [AZURE_DEPLOYMENT.md](AZURE_DEPLOYMENT.md).

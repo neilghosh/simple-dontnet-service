@@ -35,3 +35,8 @@ TestResults/
 *.coverage
 *.coveragexml
 Summary.txt
+
+# Azure credentials (never commit these!)
+azure-credentials.json
+*.publishsettings
+.azure/
