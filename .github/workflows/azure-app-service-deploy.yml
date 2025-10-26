@@ -97,8 +97,10 @@ jobs:
         az webapp config container set \
           --name ${{ env.AZURE_WEBAPP_NAME }} \
           --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
-          --docker-custom-image-name ${{ env.AZURE_CONTAINER_REGISTRY }}/${{ env.IMAGE_NAME }}:latest \
-          --docker-registry-server-url https://${{ env.AZURE_CONTAINER_REGISTRY }}
+          --container-image-name ${{ env.AZURE_CONTAINER_REGISTRY }}/${{ env.IMAGE_NAME }}:latest \
+          --container-registry-url https://${{ env.AZURE_CONTAINER_REGISTRY }} \
+          --container-registry-user username \
+          --container-registry-password $(az acr credential show -n ${{ env.REGISTRY_NAME }} -o tsv --query passwords[0].value)
     
     - name: Enable Managed Identity for ACR access
       run: |
