@@ -6,20 +6,24 @@ This project is a simple ASP.NET Core Web API that retrieves the outbound IP add
 ```
 project-root/
 ├── Controllers/
-│   └── IpController.cs             # REST controller defining the GET /api/ip/outbound endpoint
+│   └── IpController.cs                      # REST controller with IP endpoints
 ├── Services/
-│   ├── IIpAddressService.cs        # Service interface for IP address operations
-│   └── OutboundIpService.cs        # Service implementation with business logic
+│   ├── IIpAddressService.cs                 # Service interface for IP address operations
+│   └── OutboundIpService.cs                 # Service implementation with business logic
 ├── Proxies/
-│   ├── IIpifyProxy.cs              # Proxy interface for external API calls
-│   └── IpifyProxy.cs               # Proxy implementation calling ipify API
-├── Program.cs                       # Application startup and dependency injection configuration
-├── appsettings.json                 # Configuration settings for the application
-├── appsettings.Development.json     # Development-specific configuration overrides
-├── Dockerfile                       # Multi-stage Docker build configuration
-├── simple-dotnet-service.sln       # Visual Studio solution file
-├── simple-dotnet-service.http      # REST Client test file
-└── README.md                        # Project documentation
+│   ├── IIpifyProxy.cs                       # Proxy interface for external API calls
+│   └── IpifyProxy.cs                        # Proxy implementation calling ipify API
+├── SimpleDotnetService.Tests/               # Test project
+│   ├── IpControllerTests.cs                 # Unit tests for IpController
+│   ├── IpControllerIntegrationTests.cs      # Integration tests for API endpoints
+│   └── SimpleDotnetService.Tests.csproj     # Test project file
+├── Program.cs                                # Application startup and dependency injection configuration
+├── appsettings.json                          # Configuration settings for the application
+├── appsettings.Development.json              # Development-specific configuration overrides
+├── Dockerfile                                # Multi-stage Docker build configuration
+├── simple-dotnet-service.sln                # Visual Studio solution file
+├── simple-dotnet-service.http               # REST Client test file
+└── README.md                                 # Project documentation
 ```
 
 ## Architecture
@@ -53,7 +57,10 @@ The project uses:
 
 ## API Usage
 
-The `/api/ip/outbound` endpoint retrieves your outbound IP address:
+The API provides three endpoints:
+
+### 1. Get Outbound IP Address
+Retrieves your outbound IP address by calling an external API (ipify):
 
 ```bash
 curl http://localhost:5000/api/ip/outbound
@@ -62,6 +69,34 @@ curl http://localhost:5000/api/ip/outbound
 Response:
 ```json
 {"outboundip":"203.0.113.42"}
+```
+
+### 2. Get Inbound (Remote) IP Address
+Returns the IP address of the client making the request:
+
+```bash
+curl http://localhost:5000/api/ip/inbound
+```
+
+Response:
+```json
+{"inboundip":"::1"}
+```
+
+### 3. Get Request Headers
+Lists all HTTP headers sent with the request:
+
+```bash
+curl http://localhost:5000/api/ip/headers
+```
+
+Response:
+```json
+{
+  "Host": "localhost:5000",
+  "User-Agent": "curl/7.68.0",
+  "Accept": "*/*"
+}
 ```
 
 ## Docker
@@ -99,4 +134,66 @@ docker logs simple-dotnet-service
 
 ## Testing
 
-Use the provided `simple-dotnet-service.http` file in VS Code with the REST Client extension to test endpoints easily.
+The project includes comprehensive tests using xUnit framework with both unit and integration tests.
+
+### Running Tests
+
+To run all tests:
+
+```bash
+dotnet test
+```
+
+To run tests with detailed output:
+
+```bash
+dotnet test -v detailed
+```
+
+To run tests with coverage:
+
+```bash
+dotnet test --collect:"XPlat Code Coverage"
+```
+
+### Test Structure
+
+The test suite includes:
+
+#### Unit Tests (`IpControllerTests.cs`)
+- Tests controller methods in isolation using mocked dependencies
+- Validates business logic and error handling
+- Tests all three endpoints: `/api/ip/outbound`, `/api/ip/inbound`, `/api/ip/headers`
+
+**Test Coverage:**
+- ✅ `GetOutboundIp_ReturnsOkResult_WithOutboundIpAddress` - Tests successful IP retrieval
+- ✅ `GetOutboundIp_ReturnsInternalServerError_WhenExceptionOccurs` - Tests error handling
+- ✅ `GetInboundIp_ReturnsOkResult_WithRemoteIpAddress` - Tests inbound IP detection
+- ✅ `GetInboundIp_ReturnsUnknown_WhenRemoteIpIsNull` - Tests null IP handling
+- ✅ `GetHeaders_ReturnsOkResult_WithRequestHeaders` - Tests header extraction
+- ✅ `GetHeaders_ReturnsEmptyDictionary_WhenNoHeaders` - Tests empty headers
+
+#### Integration Tests (`IpControllerIntegrationTests.cs`)
+- Tests the full HTTP pipeline using `WebApplicationFactory`
+- Validates end-to-end functionality including routing, serialization, and HTTP responses
+- Tests actual API responses and JSON structure
+
+**Test Coverage:**
+- ⏭️ `GetOutboundIp_ReturnsSuccessStatusCode` - Skipped (requires external API)
+- ⏭️ `GetOutboundIp_ReturnsValidJsonWithIpAddress` - Skipped (requires external API)
+- ✅ `GetInboundIp_ReturnsSuccessStatusCode` - Tests HTTP 200 response
+- ✅ `GetInboundIp_ReturnsValidJsonWithIpAddress` - Tests JSON structure
+- ✅ `GetHeaders_ReturnsSuccessStatusCode` - Tests HTTP 200 response
+- ✅ `GetHeaders_ReturnsValidJsonDictionary` - Tests JSON dictionary structure
+- ✅ `GetHeaders_IncludesRequestHeaders` - Tests custom header inclusion
+- ✅ `GetHeaders_ContainsUserAgentHeader` - Tests default headers
+
+### Test Results Summary
+- **Total Tests:** 14
+- **Passing:** 12 ✅
+- **Skipped:** 2 ⏭️ (require external API access)
+- **Failing:** 0 ❌
+
+**Note:** Two integration tests for the outbound IP endpoint are skipped as they require external network access to `api.ipify.org`.
+
+
