@@ -78,31 +78,120 @@ This service supports Azure AD authentication using OAuth 2.0 Authorization Code
 - 📋 **Claims Display**: View token claims and granted scopes
 - 📖 **Swagger Integration**: OAuth2 authentication in Swagger UI
 
-### Configuration
+### Azure AD App Registration (Step-by-Step)
 
-1. **Register an Azure AD Application**:
-   - Go to [Azure Portal](https://portal.azure.com) > Azure Active Directory > App registrations
-   - Create a new registration with "Accounts in any organizational directory and personal Microsoft accounts"
-   - Add a Single-page application (SPA) redirect URI: `http://localhost:8080/`
-   - Under "Expose an API", create an Application ID URI and add a scope (e.g., `User.Read`)
+Follow these steps to create and configure an Azure AD application for this service:
 
-2. **Update `appsettings.json`**:
-   ```json
-   {
-     "AzureAd": {
-       "Instance": "https://login.microsoftonline.com/",
-       "TenantId": "consumers",
-       "ClientId": "YOUR_CLIENT_ID_HERE",
-       "Scopes": "api://YOUR_CLIENT_ID_HERE/User.Read"
-     }
-   }
-   ```
+#### Step 1: Create App Registration
 
-3. **API Endpoints**:
-   - `GET /` - SPA demo page with Azure AD login
-   - `GET /api/config` - Public endpoint returning Azure AD configuration
-   - `GET /api/user/claims` - **Protected** endpoint requiring authentication
-   - `GET /swagger` - Swagger UI with OAuth2 authentication
+1. Go to [Azure Portal](https://portal.azure.com)
+2. Navigate to **Microsoft Entra ID** (formerly Azure Active Directory)
+3. Select **App registrations** from the left menu
+4. Click **+ New registration**
+5. Configure the registration:
+   - **Name**: `Simple DotNet Service` (or your preferred name)
+   - **Supported account types**: Select **"Accounts in any organizational directory and personal Microsoft accounts (MSA)"**
+   - **Redirect URI**: 
+     - Platform: **Single-page application (SPA)**
+     - URI: `http://localhost:8080/`
+6. Click **Register**
+
+#### Step 2: Note the Application IDs
+
+After registration, note these values from the **Overview** page:
+- **Application (client) ID**: Copy this value (e.g., `12345678-1234-1234-1234-123456789abc`)
+- **Directory (tenant) ID**: For MSA users, use `consumers` instead of the actual tenant ID
+
+#### Step 3: Configure Authentication
+
+1. Go to **Authentication** in the left menu
+2. Under **Single-page application**, verify the redirect URI is set:
+   - `http://localhost:8080/` (for local development)
+   - Add production URLs as needed (e.g., `https://your-app.azurecontainerapps.io/`)
+3. Under **Implicit grant and hybrid flows**, ensure these are **unchecked** (PKCE doesn't need them):
+   - ☐ Access tokens
+   - ☐ ID tokens
+4. Click **Save**
+
+#### Step 4: Expose an API (Create Scope)
+
+1. Go to **Expose an API** in the left menu
+2. Click **+ Add a scope**
+3. If prompted, set the **Application ID URI** (accept default or use `api://YOUR_CLIENT_ID`)
+4. Configure the scope:
+   - **Scope name**: `User.Read`
+   - **Who can consent**: **Admins and users**
+   - **Admin consent display name**: `Read user information`
+   - **Admin consent description**: `Allows the app to read the signed-in user's information`
+   - **User consent display name**: `Read your information`
+   - **User consent description**: `Allows the app to read your information`
+   - **State**: **Enabled**
+5. Click **Add scope**
+
+The full scope will be: `api://YOUR_CLIENT_ID/User.Read`
+
+#### Step 5: Configure API Permissions (Optional)
+
+If you need Microsoft Graph access:
+1. Go to **API permissions** in the left menu
+2. Click **+ Add a permission**
+3. Select **Microsoft Graph** > **Delegated permissions**
+4. Add desired permissions (e.g., `User.Read`, `openid`, `profile`, `email`)
+5. Click **Add permissions**
+
+#### Step 6: Update Application Configuration
+
+Update `appsettings.json` with your values:
+
+```json
+{
+  "AzureAd": {
+    "Instance": "https://login.microsoftonline.com/",
+    "TenantId": "consumers",
+    "ClientId": "YOUR_CLIENT_ID_HERE",
+    "Scopes": "api://YOUR_CLIENT_ID_HERE/User.Read"
+  }
+}
+```
+
+Replace `YOUR_CLIENT_ID_HERE` with your actual **Application (client) ID** from Step 2.
+
+#### Quick Reference: Azure CLI Commands (Alternative)
+
+You can also create the app registration using Azure CLI:
+
+```bash
+# Login to Azure
+az login
+
+# Create app registration for SPA with MSA support
+az ad app create \
+  --display-name "Simple DotNet Service" \
+  --sign-in-audience "AzureADandPersonalMicrosoftAccount" \
+  --web-redirect-uris "http://localhost:8080/" \
+  --enable-id-token-issuance false \
+  --enable-access-token-issuance false
+
+# Get the App ID
+APP_ID=$(az ad app list --display-name "Simple DotNet Service" --query "[0].appId" -o tsv)
+echo "Application ID: $APP_ID"
+
+# Add API scope
+az ad app update --id $APP_ID \
+  --identifier-uris "api://$APP_ID"
+
+# Note: Adding scopes via CLI requires Microsoft Graph API calls
+# It's easier to complete scope configuration in the Azure Portal
+```
+
+### API Endpoints
+
+| Endpoint | Auth Required | Description |
+|----------|---------------|-------------|
+| `GET /` | No | SPA demo page with Azure AD login |
+| `GET /api/config` | No | Returns Azure AD configuration for SPA |
+| `GET /api/user/claims` | **Yes** | Returns authenticated user's token claims |
+| `GET /swagger` | No | Swagger UI with OAuth2 authentication |
 
 ## How to Run Locally
 
