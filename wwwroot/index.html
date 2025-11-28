@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple DotNet Service - Azure AD Demo</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+        }
+        h1 {
+            color: #1a202c;
+            font-size: 1.75rem;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+        .subtitle {
+            color: #718096;
+            text-align: center;
+            margin-bottom: 32px;
+        }
+        .auth-section {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+        .btn {
+            padding: 12px 32px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin: 8px;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px -10px rgba(102, 126, 234, 0.5);
+        }
+        .btn-danger {
+            background: #e53e3e;
+            color: white;
+        }
+        .btn-danger:hover {
+            background: #c53030;
+        }
+        .btn-secondary {
+            background: #edf2f7;
+            color: #4a5568;
+        }
+        .btn-secondary:hover {
+            background: #e2e8f0;
+        }
+        .status-card {
+            background: #f7fafc;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+        .status-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 12px;
+        }
+        .status-indicator.authenticated {
+            background: #48bb78;
+        }
+        .status-indicator.unauthenticated {
+            background: #fc8181;
+        }
+        .status-text {
+            font-weight: 600;
+            color: #2d3748;
+        }
+        .user-info {
+            display: none;
+        }
+        .user-info.visible {
+            display: block;
+        }
+        .info-grid {
+            display: grid;
+            gap: 12px;
+        }
+        .info-item {
+            background: white;
+            padding: 12px 16px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+        .info-label {
+            font-size: 0.75rem;
+            color: #718096;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 4px;
+        }
+        .info-value {
+            color: #2d3748;
+            word-break: break-all;
+            font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+            font-size: 0.875rem;
+        }
+        .claims-section {
+            margin-top: 24px;
+        }
+        .claims-title {
+            font-size: 1rem;
+            color: #2d3748;
+            margin-bottom: 16px;
+            font-weight: 600;
+        }
+        .claims-list {
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .claim-item {
+            padding: 12px 16px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .claim-item:last-child {
+            border-bottom: none;
+        }
+        .claim-type {
+            font-size: 0.75rem;
+            color: #667eea;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        .claim-value {
+            color: #2d3748;
+            word-break: break-all;
+            font-size: 0.875rem;
+        }
+        .api-section {
+            margin-top: 24px;
+        }
+        .api-title {
+            font-size: 1rem;
+            color: #2d3748;
+            margin-bottom: 16px;
+            font-weight: 600;
+        }
+        .api-response {
+            background: #1a202c;
+            color: #68d391;
+            padding: 16px;
+            border-radius: 8px;
+            font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+            font-size: 0.875rem;
+            white-space: pre-wrap;
+            word-break: break-all;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .scopes-section {
+            margin-top: 24px;
+        }
+        .scopes-title {
+            font-size: 1rem;
+            color: #2d3748;
+            margin-bottom: 16px;
+            font-weight: 600;
+        }
+        .scope-item {
+            display: inline-block;
+            background: #ebf4ff;
+            color: #667eea;
+            padding: 6px 12px;
+            border-radius: 16px;
+            font-size: 0.75rem;
+            margin: 4px;
+            font-weight: 500;
+        }
+        .error-message {
+            background: #fff5f5;
+            color: #c53030;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            display: none;
+        }
+        .error-message.visible {
+            display: block;
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: #718096;
+        }
+        .loading.visible {
+            display: block;
+        }
+        .config-note {
+            background: #fffbeb;
+            border: 1px solid #f6e05e;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 24px;
+            font-size: 0.875rem;
+            color: #744210;
+        }
+        .config-note code {
+            background: #fefcbf;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 Azure AD Authentication Demo</h1>
+        <p class="subtitle">OAuth 2.0 Authorization Code Flow with PKCE</p>
+
+        <div id="configNote" class="config-note">
+            <strong>⚙️ Configuration Required:</strong> Update <code>appsettings.json</code> with your Azure AD app registration details (ClientId, TenantId).
+        </div>
+
+        <div id="errorMessage" class="error-message"></div>
+        <div id="loading" class="loading">Loading...</div>
+
+        <div class="status-card">
+            <div class="status-header">
+                <div id="statusIndicator" class="status-indicator unauthenticated"></div>
+                <span id="statusText" class="status-text">Not Authenticated</span>
+            </div>
+
+            <div class="auth-section">
+                <button id="loginBtn" class="btn btn-primary" onclick="login()">
+                    🔑 Sign in with Microsoft
+                </button>
+                <button id="logoutBtn" class="btn btn-danger" style="display: none;" onclick="logout()">
+                    🚪 Sign Out
+                </button>
+            </div>
+
+            <div id="userInfo" class="user-info">
+                <div class="info-grid">
+                    <div class="info-item">
+                        <div class="info-label">Name</div>
+                        <div id="userName" class="info-value">-</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Email</div>
+                        <div id="userEmail" class="info-value">-</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Object ID</div>
+                        <div id="userOid" class="info-value">-</div>
+                    </div>
+                </div>
+
+                <div class="scopes-section">
+                    <div class="scopes-title">📋 Granted Scopes</div>
+                    <div id="scopesList"></div>
+                </div>
+
+                <div class="claims-section">
+                    <div class="claims-title">🎫 Token Claims</div>
+                    <div id="claimsList" class="claims-list"></div>
+                </div>
+
+                <div class="api-section">
+                    <div class="api-title">🌐 API Response (/api/user/claims)</div>
+                    <button class="btn btn-secondary" onclick="callProtectedApi()">Fetch Claims from API</button>
+                    <div id="apiResponse" class="api-response" style="margin-top: 12px;">Click button to fetch claims from protected API...</div>
+                </div>
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 16px;">
+            <a href="/swagger" class="btn btn-secondary">📖 Open Swagger UI</a>
+        </div>
+    </div>
+
+    <script>
+        // Configuration - will be populated from server or local storage
+        let config = {
+            clientId: '',
+            tenantId: 'consumers',
+            redirectUri: window.location.origin + '/',
+            scopes: []
+        };
+
+        // Token storage
+        let accessToken = null;
+        let idToken = null;
+        let tokenClaims = null;
+        let grantedScopes = [];
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Try to load config from server
+            try {
+                const response = await fetch('/api/config');
+                if (response.ok) {
+                    const serverConfig = await response.json();
+                    config.clientId = serverConfig.clientId;
+                    config.tenantId = serverConfig.tenantId;
+                    config.scopes = serverConfig.scopes || [`api://${config.clientId}/User.Read`];
+                    document.getElementById('configNote').style.display = 'none';
+                }
+            } catch (e) {
+                console.log('Using default configuration');
+            }
+
+            // Check if we're returning from OAuth
+            handleRedirect();
+
+            // Check for stored token
+            const storedToken = sessionStorage.getItem('accessToken');
+            const storedIdToken = sessionStorage.getItem('idToken');
+            const storedScopes = sessionStorage.getItem('grantedScopes');
+
+            if (storedToken && storedIdToken) {
+                accessToken = storedToken;
+                idToken = storedIdToken;
+                grantedScopes = storedScopes ? JSON.parse(storedScopes) : [];
+                try {
+                    tokenClaims = parseJwt(idToken);
+                    updateUI(true);
+                } catch (e) {
+                    logout();
+                }
+            }
+        });
+
+        // PKCE helpers
+        function generateRandomString(length) {
+            const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
+            let text = '';
+            for (let i = 0; i < length; i++) {
+                text += possible.charAt(Math.floor(Math.random() * possible.length));
+            }
+            return text;
+        }
+
+        async function generateCodeChallenge(verifier) {
+            const encoder = new TextEncoder();
+            const data = encoder.encode(verifier);
+            const digest = await crypto.subtle.digest('SHA-256', data);
+            return base64UrlEncode(digest);
+        }
+
+        function base64UrlEncode(buffer) {
+            let binary = '';
+            const bytes = new Uint8Array(buffer);
+            for (let i = 0; i < bytes.byteLength; i++) {
+                binary += String.fromCharCode(bytes[i]);
+            }
+            return btoa(binary)
+                .replace(/\+/g, '-')
+                .replace(/\//g, '_')
+                .replace(/=+$/, '');
+        }
+
+        // Parse JWT token
+        function parseJwt(token) {
+            const base64Url = token.split('.')[1];
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+            }).join(''));
+            return JSON.parse(jsonPayload);
+        }
+
+        // Login with PKCE
+        async function login() {
+            if (!config.clientId || config.clientId === 'YOUR_CLIENT_ID_HERE') {
+                showError('Please configure your Azure AD ClientId in appsettings.json');
+                return;
+            }
+
+            const codeVerifier = generateRandomString(128);
+            const codeChallenge = await generateCodeChallenge(codeVerifier);
+            const state = generateRandomString(32);
+
+            // Store verifier and state for later
+            sessionStorage.setItem('pkce_verifier', codeVerifier);
+            sessionStorage.setItem('oauth_state', state);
+
+            // Build scopes
+            const scopeString = config.scopes.join(' ') + ' openid profile email';
+
+            // Build authorization URL
+            const authUrl = new URL(`https://login.microsoftonline.com/${config.tenantId}/oauth2/v2.0/authorize`);
+            authUrl.searchParams.append('client_id', config.clientId);
+            authUrl.searchParams.append('response_type', 'code');
+            authUrl.searchParams.append('redirect_uri', config.redirectUri);
+            authUrl.searchParams.append('scope', scopeString);
+            authUrl.searchParams.append('state', state);
+            authUrl.searchParams.append('code_challenge', codeChallenge);
+            authUrl.searchParams.append('code_challenge_method', 'S256');
+            authUrl.searchParams.append('response_mode', 'query');
+
+            // Redirect to Azure AD
+            window.location.href = authUrl.toString();
+        }
+
+        // Handle redirect from Azure AD
+        async function handleRedirect() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const code = urlParams.get('code');
+            const state = urlParams.get('state');
+            const error = urlParams.get('error');
+            const errorDescription = urlParams.get('error_description');
+
+            if (error) {
+                showError(`Authentication error: ${error} - ${errorDescription}`);
+                window.history.replaceState({}, document.title, window.location.pathname);
+                return;
+            }
+
+            if (code && state) {
+                const storedState = sessionStorage.getItem('oauth_state');
+                const codeVerifier = sessionStorage.getItem('pkce_verifier');
+
+                if (state !== storedState) {
+                    showError('State mismatch - possible CSRF attack');
+                    return;
+                }
+
+                showLoading(true);
+
+                try {
+                    // Exchange code for token
+                    const tokenUrl = `https://login.microsoftonline.com/${config.tenantId}/oauth2/v2.0/token`;
+                    const scopeString = config.scopes.join(' ') + ' openid profile email';
+
+                    const response = await fetch(tokenUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded'
+                        },
+                        body: new URLSearchParams({
+                            client_id: config.clientId,
+                            grant_type: 'authorization_code',
+                            code: code,
+                            redirect_uri: config.redirectUri,
+                            code_verifier: codeVerifier,
+                            scope: scopeString
+                        })
+                    });
+
+                    const tokenResponse = await response.json();
+
+                    if (tokenResponse.error) {
+                        throw new Error(`${tokenResponse.error}: ${tokenResponse.error_description}`);
+                    }
+
+                    accessToken = tokenResponse.access_token;
+                    idToken = tokenResponse.id_token;
+
+                    // Parse scopes from response
+                    if (tokenResponse.scope) {
+                        grantedScopes = tokenResponse.scope.split(' ');
+                    }
+
+                    // Store tokens
+                    sessionStorage.setItem('accessToken', accessToken);
+                    sessionStorage.setItem('idToken', idToken);
+                    sessionStorage.setItem('grantedScopes', JSON.stringify(grantedScopes));
+
+                    // Parse claims
+                    tokenClaims = parseJwt(idToken);
+
+                    // Clear URL
+                    window.history.replaceState({}, document.title, window.location.pathname);
+
+                    // Cleanup
+                    sessionStorage.removeItem('pkce_verifier');
+                    sessionStorage.removeItem('oauth_state');
+
+                    updateUI(true);
+                } catch (e) {
+                    showError('Token exchange failed: ' + e.message);
+                } finally {
+                    showLoading(false);
+                }
+            }
+        }
+
+        // Logout
+        function logout() {
+            accessToken = null;
+            idToken = null;
+            tokenClaims = null;
+            grantedScopes = [];
+            sessionStorage.removeItem('accessToken');
+            sessionStorage.removeItem('idToken');
+            sessionStorage.removeItem('grantedScopes');
+            updateUI(false);
+
+            // Optionally redirect to Azure AD logout
+            const logoutUrl = `https://login.microsoftonline.com/${config.tenantId}/oauth2/v2.0/logout?post_logout_redirect_uri=${encodeURIComponent(window.location.origin)}`;
+            window.location.href = logoutUrl;
+        }
+
+        // Call protected API
+        async function callProtectedApi() {
+            if (!accessToken) {
+                showError('Please sign in first');
+                return;
+            }
+
+            const apiResponseEl = document.getElementById('apiResponse');
+            apiResponseEl.textContent = 'Fetching...';
+
+            try {
+                const response = await fetch('/api/user/claims', {
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`
+                    }
+                });
+
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        throw new Error('Unauthorized - token may be expired');
+                    }
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                apiResponseEl.textContent = JSON.stringify(data, null, 2);
+            } catch (e) {
+                apiResponseEl.textContent = 'Error: ' + e.message;
+            }
+        }
+
+        // Update UI based on authentication state
+        function updateUI(isAuthenticated) {
+            const statusIndicator = document.getElementById('statusIndicator');
+            const statusText = document.getElementById('statusText');
+            const loginBtn = document.getElementById('loginBtn');
+            const logoutBtn = document.getElementById('logoutBtn');
+            const userInfo = document.getElementById('userInfo');
+
+            if (isAuthenticated && tokenClaims) {
+                statusIndicator.className = 'status-indicator authenticated';
+                statusText.textContent = 'Authenticated';
+                loginBtn.style.display = 'none';
+                logoutBtn.style.display = 'inline-block';
+                userInfo.className = 'user-info visible';
+
+                // Update user info
+                document.getElementById('userName').textContent = tokenClaims.name || '-';
+                document.getElementById('userEmail').textContent = tokenClaims.preferred_username || tokenClaims.email || '-';
+                document.getElementById('userOid').textContent = tokenClaims.oid || tokenClaims.sub || '-';
+
+                // Update scopes
+                const scopesList = document.getElementById('scopesList');
+                scopesList.innerHTML = grantedScopes
+                    .filter(s => !['openid', 'profile', 'email'].includes(s))
+                    .map(s => `<span class="scope-item">${s}</span>`)
+                    .join('');
+
+                if (scopesList.innerHTML === '') {
+                    scopesList.innerHTML = '<span class="scope-item">No API scopes granted</span>';
+                }
+
+                // Update claims list
+                const claimsList = document.getElementById('claimsList');
+                claimsList.innerHTML = Object.entries(tokenClaims)
+                    .map(([key, value]) => `
+                        <div class="claim-item">
+                            <div class="claim-type">${key}</div>
+                            <div class="claim-value">${typeof value === 'object' ? JSON.stringify(value) : value}</div>
+                        </div>
+                    `).join('');
+            } else {
+                statusIndicator.className = 'status-indicator unauthenticated';
+                statusText.textContent = 'Not Authenticated';
+                loginBtn.style.display = 'inline-block';
+                logoutBtn.style.display = 'none';
+                userInfo.className = 'user-info';
+            }
+        }
+
+        // Show error message
+        function showError(message) {
+            const errorEl = document.getElementById('errorMessage');
+            errorEl.textContent = message;
+            errorEl.className = 'error-message visible';
+            setTimeout(() => {
+                errorEl.className = 'error-message';
+            }, 10000);
+        }
+
+        // Show/hide loading
+        function showLoading(show) {
+            document.getElementById('loading').className = show ? 'loading visible' : 'loading';
+        }
+    </script>
+</body>
+</html>

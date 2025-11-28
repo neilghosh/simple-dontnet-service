@@ -1,6 +1,6 @@
 # ASP.NET Core Web API: Simple Dotnet Service
 
-This project is a simple ASP.NET Core Web API that retrieves the outbound IP address by calling the ipify API. It demonstrates a clean layered architecture with separation of concerns.
+This project is a simple ASP.NET Core Web API that retrieves the outbound IP address by calling the ipify API. It demonstrates a clean layered architecture with separation of concerns and Azure AD authentication using OAuth 2.0 Authorization Code Flow with PKCE.
 
 ## Directory Structure
 ```
@@ -9,7 +9,11 @@ project-root/
 │   └── workflows/
 │       └── azure-container-deploy.yml       # CI/CD pipeline for Azure deployment
 ├── Controllers/
-│   └── IpController.cs                      # REST controller with IP endpoints
+│   ├── IpController.cs                      # REST controller with IP endpoints
+│   ├── UserController.cs                    # Protected controller for user claims
+│   └── ConfigController.cs                  # Azure AD configuration endpoint
+├── wwwroot/
+│   └── index.html                           # SPA demo with Azure AD authentication
 ├── Services/
 │   ├── IIpAddressService.cs                 # Service interface for IP address operations
 │   └── OutboundIpService.cs                 # Service implementation with business logic
@@ -55,10 +59,50 @@ This project follows a clean layered architecture with clear separation of conce
 - **Interface Layer**: All public interfaces defined in separate files from implementations
 
 The project uses:
+- **Azure AD Authentication**: JWT bearer token authentication with OAuth 2.0 PKCE flow for SPAs
 - **Dependency Injection**: Services and proxies are registered in `Program.cs` and injected into controllers
 - **Async/Await**: All service and proxy methods are asynchronous
 - **Logging**: Integrated logging throughout all application layers
 - **Error Handling**: Try-catch blocks with proper error logging
+- **Swagger/OpenAPI**: Interactive API documentation with OAuth2 PKCE support
+
+## Azure AD Authentication
+
+This service supports Azure AD authentication using OAuth 2.0 Authorization Code Flow with PKCE (Proof Key for Code Exchange), making it suitable for Single Page Applications (SPAs) and Microsoft Account (MSA) users.
+
+### Features
+
+- 🔐 **SPA Authentication**: Pure JavaScript OAuth 2.0 implementation without MSAL.js dependency
+- 🔑 **PKCE Support**: Secure authorization code flow for public clients
+- 👤 **MSA Support**: Single tenant configuration for Microsoft Account users
+- 📋 **Claims Display**: View token claims and granted scopes
+- 📖 **Swagger Integration**: OAuth2 authentication in Swagger UI
+
+### Configuration
+
+1. **Register an Azure AD Application**:
+   - Go to [Azure Portal](https://portal.azure.com) > Azure Active Directory > App registrations
+   - Create a new registration with "Accounts in any organizational directory and personal Microsoft accounts"
+   - Add a Single-page application (SPA) redirect URI: `http://localhost:8080/`
+   - Under "Expose an API", create an Application ID URI and add a scope (e.g., `User.Read`)
+
+2. **Update `appsettings.json`**:
+   ```json
+   {
+     "AzureAd": {
+       "Instance": "https://login.microsoftonline.com/",
+       "TenantId": "consumers",
+       "ClientId": "YOUR_CLIENT_ID_HERE",
+       "Scopes": "api://YOUR_CLIENT_ID_HERE/User.Read"
+     }
+   }
+   ```
+
+3. **API Endpoints**:
+   - `GET /` - SPA demo page with Azure AD login
+   - `GET /api/config` - Public endpoint returning Azure AD configuration
+   - `GET /api/user/claims` - **Protected** endpoint requiring authentication
+   - `GET /swagger` - Swagger UI with OAuth2 authentication
 
 ## How to Run Locally
 
@@ -72,9 +116,11 @@ The project uses:
 
 ## API Usage
 
-The API provides three endpoints:
+The API provides public and protected endpoints:
 
-### 1. Get Outbound IP Address
+### Public Endpoints
+
+#### 1. Get Outbound IP Address
 Retrieves your outbound IP address by calling an external API (ipify):
 
 ```bash
@@ -98,7 +144,7 @@ Response:
 {"inboundip":"::1"}
 ```
 
-### 3. Get Request Headers
+#### 3. Get Request Headers
 Lists all HTTP headers sent with the request:
 
 ```bash
@@ -111,6 +157,45 @@ Response:
   "Host": "localhost:5000",
   "User-Agent": "curl/7.68.0",
   "Accept": "*/*"
+}
+```
+
+#### 4. Get Azure AD Configuration
+Returns the Azure AD configuration for the SPA client:
+
+```bash
+curl http://localhost:5000/api/config
+```
+
+Response:
+```json
+{
+  "clientId": "YOUR_CLIENT_ID",
+  "tenantId": "consumers",
+  "scopes": ["api://YOUR_CLIENT_ID/User.Read"]
+}
+```
+
+### Protected Endpoints (Require Azure AD Bearer Token)
+
+#### 5. Get User Claims
+Returns the claims from the authenticated user's token:
+
+```bash
+curl -H "Authorization: Bearer YOUR_ACCESS_TOKEN" http://localhost:5000/api/user/claims
+```
+
+Response:
+```json
+{
+  "isAuthenticated": true,
+  "name": "John Doe",
+  "claims": {
+    "name": "John Doe",
+    "preferred_username": "john@example.com",
+    "oid": "12345678-1234-1234-1234-123456789abc"
+  },
+  "scopes": ["User.Read"]
 }
 ```
 

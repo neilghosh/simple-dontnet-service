@@ -1,15 +1,52 @@
 @startuml Simple DotNet Service Architecture
 
+participant "SPA Client\n(index.html)" as SPA
 participant Client as C
+participant "Azure AD\n(login.microsoftonline.com)" as AAD
 participant "ASP.NET Core\nWeb API" as API
+participant "Authentication\nMiddleware" as Auth
 participant "IpController" as Controller
+participant "UserController" as UserCtrl
+participant "ConfigController" as ConfigCtrl
 participant "IIpAddressService" as Service
 participant "OutboundIpService" as ServiceImpl
 participant "IIpifyProxy" as Proxy
 participant "IpifyProxy" as ProxyImpl
 participant "External API\n(api.ipify.org)" as ExtAPI
 
-== HTTP Request: Get Outbound IP ==
+== OAuth 2.0 Authorization Code Flow with PKCE ==
+SPA ->> SPA: Generate code_verifier & code_challenge
+SPA ->> AAD: Redirect to /authorize\n(client_id, redirect_uri, code_challenge)
+activate AAD
+AAD ->> AAD: User signs in with Microsoft Account
+AAD -->> SPA: Authorization code
+deactivate AAD
+
+SPA ->> AAD: POST /token\n(code, code_verifier)
+activate AAD
+AAD -->> SPA: access_token, id_token
+deactivate AAD
+
+== HTTP Request: Get User Claims (Protected) ==
+SPA ->> API: GET /api/user/claims\nAuthorization: Bearer {access_token}
+activate API
+
+API ->> Auth: Validate JWT token
+activate Auth
+Auth ->> AAD: Verify token signature
+Auth -->> API: Token valid, claims extracted
+deactivate Auth
+
+API ->> UserCtrl: Route to UserController
+activate UserCtrl
+UserCtrl ->> UserCtrl: Extract claims from User principal
+UserCtrl -->> API: 200 OK
+deactivate UserCtrl
+
+API -->> SPA: {"isAuthenticated": true, "claims": {...}, "scopes": [...]}
+deactivate API
+
+== HTTP Request: Get Outbound IP (Public) ==
 C ->> API: GET /api/ip/outbound
 activate API
 
@@ -79,28 +116,39 @@ deactivate Controller
 API -->> C: {"Host": "...", "User-Agent": "..."}
 deactivate API
 
+note over SPA
+  SPA Demo (wwwroot/index.html):
+  - OAuth 2.0 PKCE flow (no MSAL.js)
+  - Sign in with Microsoft Account
+  - Display token claims & scopes
+  - Call protected API endpoints
+end note
+
 note over C
   Example Endpoints:
+  
+  Public:
   GET /api/ip/outbound
-  → {"outboundip":"203.0.113.42"}
-  
   GET /api/ip/inbound
-  → {"inboundip":"::1"}
-  
   GET /api/ip/headers
-  → {"Host":"localhost:5000",...}
+  GET /api/config
+  
+  Protected (requires Bearer token):
+  GET /api/user/claims
 end note
 
 note over API
   Environment: Development/Production
   Port: 5000 (local), 8080 (Docker/ACI)
   Framework: .NET 8.0
-  OpenAPI: Swagger/Swashbuckle
+  Authentication: Azure AD / JWT Bearer
+  OpenAPI: Swagger with OAuth2 PKCE
   
   Layers:
-  - Controllers: IpController
+  - Controllers: IpController, UserController, ConfigController
   - Services: IIpAddressService, OutboundIpService
   - Proxies: IIpifyProxy, IpifyProxy
+  - Static Files: wwwroot/index.html (SPA)
   - Tests: xUnit unit & integration tests
   
   Deployment:
