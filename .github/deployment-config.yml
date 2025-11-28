@@ -1,0 +1,101 @@
+# Azure Container Apps Deployment Configuration
+# This file documents the configurable parameters for CI/CD deployment
+
+# ============================================================================
+# DEPLOYMENT SETTINGS
+# ============================================================================
+# These values are configured in .github/workflows/azure-container-apps-deploy.yml
+
+deployment:
+  # Default Azure region (can be overridden via workflow_dispatch)
+  default_region: "eastus"
+  
+  # Available regions for manual deployment
+  available_regions:
+    - eastus
+    - eastus2
+    - westus
+    - westus2
+    - westeurope
+    - northeurope
+    - southeastasia
+    - australiaeast
+
+  # Resource naming
+  resource_group: "simple-dotnet-service-rg"
+  container_app_name: "simple-dotnet-service"
+  container_app_environment: "simple-dotnet-service-env"
+
+  # Application settings
+  target_port: 8080
+  ingress: external
+
+# ============================================================================
+# REQUIRED GITHUB SECRETS
+# ============================================================================
+# Configure these in your GitHub repository:
+# Settings → Secrets and variables → Actions → New repository secret
+
+secrets:
+  # Azure OIDC Authentication (Federated Identity - Recommended)
+  AZURE_CLIENT_ID: "Service Principal Application (client) ID"
+  AZURE_TENANT_ID: "Azure AD Tenant ID"
+  AZURE_SUBSCRIPTION_ID: "Azure Subscription ID"
+
+# ============================================================================
+# AZURE SETUP INSTRUCTIONS
+# ============================================================================
+# Run these commands to set up Azure resources and GitHub OIDC authentication
+
+# 1. Login to Azure
+#    az login
+
+# 2. Get your subscription ID
+#    SUBSCRIPTION_ID=$(az account show --query id --output tsv)
+#    echo "Subscription ID: $SUBSCRIPTION_ID"
+
+# 3. Create a resource group
+#    az group create --name simple-dotnet-service-rg --location eastus
+
+# 4. Create an Azure AD App Registration for GitHub OIDC
+#    APP_ID=$(az ad app create --display-name "github-actions-simple-dotnet-service" --query appId --output tsv)
+#    echo "App ID (AZURE_CLIENT_ID): $APP_ID"
+
+# 5. Create a Service Principal
+#    az ad sp create --id $APP_ID
+
+# 6. Assign Contributor role to the service principal
+#    az role assignment create \
+#      --assignee $APP_ID \
+#      --role Contributor \
+#      --scope /subscriptions/$SUBSCRIPTION_ID/resourceGroups/simple-dotnet-service-rg
+
+# 7. Configure federated credentials for GitHub OIDC
+#    # For main branch pushes
+#    az ad app federated-credential create \
+#      --id $APP_ID \
+#      --parameters '{
+#        "name": "github-main-branch",
+#        "issuer": "https://token.actions.githubusercontent.com",
+#        "subject": "repo:neilghosh/simple-dontnet-service:ref:refs/heads/main",
+#        "audiences": ["api://AzureADTokenExchange"]
+#      }'
+#
+#    # For pull requests (optional)
+#    az ad app federated-credential create \
+#      --id $APP_ID \
+#      --parameters '{
+#        "name": "github-pull-request",
+#        "issuer": "https://token.actions.githubusercontent.com",
+#        "subject": "repo:neilghosh/simple-dontnet-service:pull_request",
+#        "audiences": ["api://AzureADTokenExchange"]
+#      }'
+
+# 8. Get Tenant ID
+#    TENANT_ID=$(az account show --query tenantId --output tsv)
+#    echo "Tenant ID (AZURE_TENANT_ID): $TENANT_ID"
+
+# 9. Add secrets to GitHub repository:
+#    - AZURE_CLIENT_ID: $APP_ID
+#    - AZURE_TENANT_ID: $TENANT_ID  
+#    - AZURE_SUBSCRIPTION_ID: $SUBSCRIPTION_ID
