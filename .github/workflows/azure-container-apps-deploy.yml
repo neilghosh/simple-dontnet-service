@@ -117,9 +117,10 @@ jobs:
     # ========================================================================
     - name: Install Azure Container Apps extension
       run: |
-        az extension add --name containerapp --upgrade
-        az provider register --namespace Microsoft.App --wait
-        az provider register --namespace Microsoft.OperationalInsights --wait
+        az extension add --name containerapp --upgrade --yes || true
+        # Register providers (may already be registered)
+        az provider register --namespace Microsoft.App || true
+        az provider register --namespace Microsoft.OperationalInsights || true
 
     - name: Create or update Resource Group
       run: |
