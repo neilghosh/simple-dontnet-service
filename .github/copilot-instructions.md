@@ -15,6 +15,10 @@ ASP.NET Core Web API project using layered architecture with dependency injectio
 - **README.md**: Update when adding/removing files, renaming classes, or changing structure
 - **Architecture diagrams**: Update `arch.wsd` and PNG when PR changes components or dependencies
 
+## Git Operations
+
+- **Never** run `git commit` or `git push` unless the user explicitly requests it in their prompt
+
 ## After Major Changes
 
 Build and test locally:

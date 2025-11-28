@@ -32,10 +32,10 @@ project-root/
 ├── appsettings.json                          # Configuration settings for the application
 ├── appsettings.Development.json              # Development-specific configuration overrides
 ├── Dockerfile                                # Multi-stage Docker build configuration
-├── arch.wsd                                  # Architecture diagram source (PlantUML)
-├── Simple DotNet Service Architecture.png    # Architecture diagram image
-├── AZURE_DEPLOYMENT.md                       # Azure deployment setup guide
-├── QUICKSTART.md                             # 5-minute Azure deployment quickstart
+├── docs/
+│   ├── arch.wsd                             # Architecture diagram source (PlantUML)
+│   ├── Simple DotNet Service Architecture.png  # Architecture diagram image
+│   └── DEPLOYMENT_OVERVIEW.md               # Complete deployment documentation
 ├── simple-dotnet-service.sln                # Visual Studio solution file
 ├── simple-dotnet-service.http               # REST Client test file
 └── README.md                                 # Project documentation
@@ -267,74 +267,48 @@ The test suite includes:
 
 ## Azure Deployment
 
-This project includes automated CI/CD deployment to Azure using GitHub Actions. Choose the deployment option that best fits your needs:
+This project includes automated CI/CD deployment to **Azure Container Apps** using GitHub Actions with OIDC authentication.
 
-### Deployment Options
+📖 **Complete Documentation**: See [docs/DEPLOYMENT_OVERVIEW.md](docs/DEPLOYMENT_OVERVIEW.md)
 
-#### Option 1: Azure App Service (Recommended)
-**Best for: Production applications, HTTPS support, custom domains**
+### Deployment Overview
 
-- **5-Minute Setup Guide**: See [docs/AZURE_APP_SERVICE_QUICKSTART.md](docs/AZURE_APP_SERVICE_QUICKSTART.md)
-- **Detailed Documentation**: See [docs/AZURE_APP_SERVICE_DEPLOYMENT.md](docs/AZURE_APP_SERVICE_DEPLOYMENT.md)
+- **Target**: Azure Container Apps
+- **Authentication**: OIDC (OpenID Connect) via Service Principal - no stored secrets
+- **Trigger**: Push to `main` branch or manual workflow dispatch
+- **Pipeline**: Build → Test → Deploy → Health Check
 
-**Key Benefits:**
-- ✅ Built-in HTTPS support on port 443
-- ✅ Automatic SSL/TLS certificates
-- ✅ Custom domain support
-- ✅ Deployment slots for zero-downtime updates
-- ✅ Integrated monitoring and scaling
-- ✅ Fully managed platform
+### Key Features
 
-**Quick Test:**
+- ✅ **Secure OIDC Authentication** - No long-lived credentials stored in GitHub
+- ✅ **Automatic HTTPS** - Built-in TLS termination
+- ✅ **Auto-scaling** - Scale to zero when idle
+- ✅ **Health Verification** - Automatic health checks after deployment
+
+### Quick Test (After Deployment)
+
 ```bash
-# After deployment, test with HTTPS
-curl https://<your-app-name>.azurewebsites.net/api/ip/outbound
-curl https://<your-app-name>.azurewebsites.net/api/ip/inbound
-curl https://<your-app-name>.azurewebsites.net/api/ip/headers
+# Get your app URL
+URL=$(az containerapp show -n simple-dotnet-service -g simple-dotnet-service-rg --query properties.configuration.ingress.fqdn -o tsv)
+
+# Test the endpoints
+curl https://$URL/api/ip/outbound
+curl https://$URL/api/ip/inbound
+curl https://$URL/api/ip/headers
 ```
 
-#### Option 2: Azure Container Instances
-**Best for: Pay-per-second billing, Docker-first deployment**
+### GitHub Secrets Required
 
-- **5-Minute Setup Guide**: See [docs/QUICKSTART.md](docs/QUICKSTART.md)
-- **Detailed Documentation**: See [docs/AZURE_DEPLOYMENT.md](docs/AZURE_DEPLOYMENT.md)
+Only 3 secrets are needed (OIDC-based authentication):
 
-**Key Benefits:**
-- ✅ Pay-per-second billing
-- ✅ No always-on costs
-- ✅ Serverless hosting
-- ✅ Docker compatibility
-
-**Quick Test:**
-```bash
-# After deployment, test with HTTP
-curl http://<your-container-url>:8080/api/ip/outbound
-curl http://<your-container-url>:8080/api/ip/inbound
-curl http://<your-container-url>:8080/api/ip/headers
-```
-
-### Comparison
-
-| Feature | App Service | Container Instances |
-|---------|-------------|---------------------|
-| HTTPS Support | Built-in (port 443) | Supported, requires setup |
-| SSL Certificates | Automatic, managed | Manual configuration |
-| Custom Domains | Native support | Requires additional configuration |
-| Deployment Slots | Yes (Standard+) | No |
-| Cost Model | Fixed monthly | Pay-per-second |
-| Best For | Production apps | Dev/test, batch jobs |
+| Secret | Description |
+|--------|-------------|
+| `AZURE_CLIENT_ID` | Service Principal Application ID |
+| `AZURE_TENANT_ID` | Azure AD Tenant ID |
+| `AZURE_SUBSCRIPTION_ID` | Azure Subscription ID |
 
 ### Workflow Triggers
 
-Both deployment pipelines run on:
-- Push to `main` branch (builds, tests, and deploys)
-- Pull requests (builds and tests only)
-- Manual workflow dispatch
-
-### Prerequisites
-
-1. Azure subscription
-2. Azure CLI installed
-3. GitHub repository secrets configured
-
-For complete setup and troubleshooting guides, see the documentation links above.
+- **Push to `main`**: Builds, tests, and deploys
+- **Pull requests**: Builds and tests only (no deployment)
+- **Manual dispatch**: Trigger from GitHub Actions UI with region selection
