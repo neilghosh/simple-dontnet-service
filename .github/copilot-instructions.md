@@ -17,9 +17,10 @@ ASP.NET Core Web API project using layered architecture with dependency injectio
 
 ## After Major Changes
 
-Build and test:
+Build and test locally:
 ```bash
 dotnet build simple-dotnet-service.csproj
-dotnet run
-curl http://localhost:5000/api/name
+dotnet run & PID=$!; sleep 5; curl http://localhost:8080/api/ip/outbound; kill $PID
 ```
+
+For Docker build and test, use the prompt file: `.github/prompts/docker-test.prompt.md`
