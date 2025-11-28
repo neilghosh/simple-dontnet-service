@@ -166,43 +166,14 @@
         }
         .api-section {
             margin-top: 24px;
+            text-align: center;
         }
-        .api-title {
+        .claims-title {
             font-size: 1rem;
             color: #2d3748;
-            margin-bottom: 16px;
+            margin-bottom: 12px;
             font-weight: 600;
-        }
-        .api-response {
-            background: #1a202c;
-            color: #68d391;
-            padding: 16px;
-            border-radius: 8px;
-            font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
-            font-size: 0.875rem;
-            white-space: pre-wrap;
-            word-break: break-all;
-            max-height: 200px;
-            overflow-y: auto;
-        }
-        .scopes-section {
-            margin-top: 24px;
-        }
-        .scopes-title {
-            font-size: 1rem;
-            color: #2d3748;
-            margin-bottom: 16px;
-            font-weight: 600;
-        }
-        .scope-item {
-            display: inline-block;
-            background: #ebf4ff;
-            color: #667eea;
-            padding: 6px 12px;
-            border-radius: 16px;
-            font-size: 0.75rem;
-            margin: 4px;
-            font-weight: 500;
+            text-align: left;
         }
         .error-message {
             background: #fff5f5;
@@ -260,11 +231,23 @@
             </div>
 
             <div class="auth-section">
+                <div id="scopeOptions" style="margin-bottom: 16px; text-align: left; padding: 12px; background: #f7fafc; border-radius: 8px;">
+                    <label style="display: flex; align-items: center; cursor: pointer;">
+                        <input type="checkbox" id="includeUserReadScope" checked style="margin-right: 8px; width: 18px; height: 18px;">
+                        <span style="font-size: 0.9rem; color: #4a5568;">
+                            Request <code style="background: #edf2f7; padding: 2px 6px; border-radius: 4px;">User.Read</code> scope 
+                            <span style="color: #718096; font-size: 0.8rem;">(unchecked = Access.Basic only → 403)</span>
+                        </span>
+                    </label>
+                </div>
                 <button id="loginBtn" class="btn btn-primary" onclick="login()">
                     🔑 Sign in with Microsoft
                 </button>
                 <button id="logoutBtn" class="btn btn-danger" style="display: none;" onclick="logout()">
                     🚪 Sign Out
+                </button>
+                <button id="revokeBtn" class="btn btn-secondary" style="display: none; margin-left: 8px;" onclick="revokeAndRelogin()">
+                    🔄 Revoke & Re-login
                 </button>
             </div>
 
@@ -278,26 +261,15 @@
                         <div class="info-label">Email</div>
                         <div id="userEmail" class="info-value">-</div>
                     </div>
-                    <div class="info-item">
-                        <div class="info-label">Object ID</div>
-                        <div id="userOid" class="info-value">-</div>
-                    </div>
-                </div>
-
-                <div class="scopes-section">
-                    <div class="scopes-title">📋 Granted Scopes</div>
-                    <div id="scopesList"></div>
-                </div>
-
-                <div class="claims-section">
-                    <div class="claims-title">🎫 Token Claims</div>
-                    <div id="claimsList" class="claims-list"></div>
                 </div>
 
                 <div class="api-section">
-                    <div class="api-title">🌐 API Response (/api/user/claims)</div>
-                    <button class="btn btn-secondary" onclick="callProtectedApi()">Fetch Claims from API</button>
-                    <div id="apiResponse" class="api-response" style="margin-top: 12px;">Click button to fetch claims from protected API...</div>
+                    <button class="btn btn-secondary" onclick="fetchBasicInfo()">👤 Basic Profile (openid, profile, email)</button>
+                    <button class="btn btn-secondary" onclick="fetchFullInfo()">📋 Full Profile (+ User.Read scope)</button>
+                    <div id="userInfoContainer" style="display: none; margin-top: 16px;">
+                        <div id="infoTitle" class="claims-title"></div>
+                        <div id="userInfoList" class="claims-list"></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -338,8 +310,29 @@
                 console.log('Using default configuration');
             }
 
+            // Check if we need to trigger fresh login after revoke
+            if (localStorage.getItem('trigger_fresh_login') === 'true') {
+                const includeScope = localStorage.getItem('fresh_login_include_scope') === 'true';
+                localStorage.removeItem('trigger_fresh_login');
+                localStorage.removeItem('fresh_login_include_scope');
+                
+                // Set checkbox state and trigger login
+                document.getElementById('includeUserReadScope').checked = includeScope;
+                sessionStorage.setItem('include_user_read', includeScope);
+                
+                // Small delay to ensure config is loaded, then login
+                setTimeout(() => login(), 500);
+                return;
+            }
+
+            // Restore checkbox state from session (before redirect overwrites it)
+            const storedIncludeUserRead = sessionStorage.getItem('include_user_read');
+            if (storedIncludeUserRead !== null) {
+                document.getElementById('includeUserReadScope').checked = storedIncludeUserRead === 'true';
+            }
+
             // Check if we're returning from OAuth
-            handleRedirect();
+            await handleRedirect();
 
             // Check for stored token
             const storedToken = sessionStorage.getItem('accessToken');
@@ -413,8 +406,20 @@
             sessionStorage.setItem('pkce_verifier', codeVerifier);
             sessionStorage.setItem('oauth_state', state);
 
-            // Build scopes
-            const scopeString = config.scopes.join(' ') + ' openid profile email';
+            // Check if User.Read scope should be included
+            const includeUserRead = document.getElementById('includeUserReadScope').checked;
+            sessionStorage.setItem('include_user_read', includeUserRead);
+
+            // Build scopes:
+            // - With checkbox: request User.Read scope (token includes User.Read -> API returns 200)
+            // - Without checkbox: request Access.Basic scope (token for our API but without User.Read -> API returns 403)
+            let scopeString;
+            if (includeUserRead) {
+                scopeString = config.scopes.join(' ') + ' openid profile email';
+            } else {
+                // Use Access.Basic scope - gets token for our API but without User.Read
+                scopeString = `api://${config.clientId}/Access.Basic openid profile email`;
+            }
 
             // Build authorization URL
             const authUrl = new URL(`https://login.microsoftonline.com/${config.tenantId}/oauth2/v2.0/authorize`);
@@ -426,6 +431,7 @@
             authUrl.searchParams.append('code_challenge', codeChallenge);
             authUrl.searchParams.append('code_challenge_method', 'S256');
             authUrl.searchParams.append('response_mode', 'query');
+            authUrl.searchParams.append('prompt', 'consent');
 
             // Redirect to Azure AD
             window.location.href = authUrl.toString();
@@ -459,7 +465,16 @@
                 try {
                     // Exchange code for token
                     const tokenUrl = `https://login.microsoftonline.com/${config.tenantId}/oauth2/v2.0/token`;
-                    const scopeString = config.scopes.join(' ') + ' openid profile email';
+                    
+                    // Use same scope as authorization request
+                    const includeUserRead = sessionStorage.getItem('include_user_read') === 'true';
+                    let scopeString;
+                    if (includeUserRead) {
+                        scopeString = config.scopes.join(' ') + ' openid profile email';
+                    } else {
+                        // Use Access.Basic scope - gets token for our API but without User.Read
+                        scopeString = `api://${config.clientId}/Access.Basic openid profile email`;
+                    }
 
                     const response = await fetch(tokenUrl, {
                         method: 'POST',
@@ -477,17 +492,26 @@
                     });
 
                     const tokenResponse = await response.json();
+                    console.log('Token response:', tokenResponse);
 
                     if (tokenResponse.error) {
+                        // Check if it's a scope propagation issue with Access.Basic
+                        if (tokenResponse.error === 'invalid_scope' && tokenResponse.error_description?.includes('Access.Basic')) {
+                            throw new Error('Azure AD scope propagation issue. The Access.Basic scope may still be propagating. Please wait a moment and try "Revoke & Re-login" again.');
+                        }
                         throw new Error(`${tokenResponse.error}: ${tokenResponse.error_description}`);
                     }
 
                     accessToken = tokenResponse.access_token;
                     idToken = tokenResponse.id_token;
+                    
+                    console.log('Access token received:', accessToken ? 'Yes (' + accessToken.substring(0, 50) + '...)' : 'No');
+                    console.log('ID token received:', idToken ? 'Yes' : 'No');
 
                     // Parse scopes from response
                     if (tokenResponse.scope) {
                         grantedScopes = tokenResponse.scope.split(' ');
+                        console.log('Granted scopes:', grantedScopes);
                     }
 
                     // Store tokens
@@ -530,34 +554,135 @@
             window.location.href = logoutUrl;
         }
 
-        // Call protected API
-        async function callProtectedApi() {
+        // Revoke consent and re-login (forces fresh consent screen)
+        function revokeAndRelogin() {
+            // Clear all local tokens and state
+            accessToken = null;
+            idToken = null;
+            tokenClaims = null;
+            grantedScopes = [];
+            sessionStorage.clear();
+            
+            // For personal accounts, direct revocation isn't available via API
+            // Instead, we'll logout and immediately trigger login with prompt=consent
+            // This ensures user sees the consent screen again
+            
+            // Store flag to trigger login after logout redirect
+            localStorage.setItem('trigger_fresh_login', 'true');
+            localStorage.setItem('fresh_login_include_scope', document.getElementById('includeUserReadScope').checked);
+            
+            // Redirect to logout, then back to app (which will trigger fresh login)
+            const logoutUrl = `https://login.microsoftonline.com/${config.tenantId}/oauth2/v2.0/logout?post_logout_redirect_uri=${encodeURIComponent(window.location.origin)}`;
+            window.location.href = logoutUrl;
+        }
+
+        // Fetch basic profile info (from ID token - openid, profile, email scopes)
+        function fetchBasicInfo() {
+            if (!tokenClaims) {
+                showError('Please sign in first');
+                return;
+            }
+
+            const container = document.getElementById('userInfoContainer');
+            const infoList = document.getElementById('userInfoList');
+            const infoTitle = document.getElementById('infoTitle');
+            
+            infoTitle.textContent = '👤 Basic Profile (openid + profile + email scopes)';
+            container.style.display = 'block';
+
+            // These claims come from openid, profile, and email scopes only
+            const basicClaims = [
+                { label: 'Name', value: tokenClaims.name },
+                { label: 'Preferred Username', value: tokenClaims.preferred_username },
+                { label: 'Email', value: tokenClaims.email },
+                { label: 'Subject (sub)', value: tokenClaims.sub }
+            ];
+
+            infoList.innerHTML = basicClaims
+                .map(c => `
+                    <div class="claim-item">
+                        <div class="claim-type">${c.label}</div>
+                        <div class="claim-value">${c.value || '<em style="color: #a0aec0;">Not available</em>'}</div>
+                    </div>
+                `).join('');
+        }
+
+        // Fetch full profile info by calling the protected API
+        async function fetchFullInfo() {
             if (!accessToken) {
                 showError('Please sign in first');
                 return;
             }
 
-            const apiResponseEl = document.getElementById('apiResponse');
-            apiResponseEl.textContent = 'Fetching...';
+            const container = document.getElementById('userInfoContainer');
+            const infoList = document.getElementById('userInfoList');
+            const infoTitle = document.getElementById('infoTitle');
+            
+            infoTitle.textContent = '📋 Full Profile (calling protected API /api/user/claims)';
+            container.style.display = 'block';
+            infoList.innerHTML = '<div class="claim-item"><div class="claim-value">Loading...</div></div>';
 
             try {
+                // Call the protected API endpoint with the access token
                 const response = await fetch('/api/user/claims', {
                     headers: {
                         'Authorization': `Bearer ${accessToken}`
                     }
                 });
 
+                if (response.status === 401) {
+                    infoList.innerHTML = `
+                        <div class="claim-item">
+                            <div class="claim-type" style="color: #e53e3e;">❌ 401 Unauthorized</div>
+                            <div class="claim-value">Token is invalid, expired, or has wrong audience. Please sign in again.</div>
+                        </div>`;
+                    return;
+                }
+
+                if (response.status === 403) {
+                    infoList.innerHTML = `
+                        <div class="claim-item">
+                            <div class="claim-type" style="color: #ed8936;">❌ 403 Forbidden</div>
+                            <div class="claim-value"><strong>Expected behavior!</strong> Your token is valid and has the correct audience (this API), but it's missing the required <code>User.Read</code> scope.<br><br>The token only has <code>Access.Basic</code> scope, which grants API access but not permission to read user claims.<br><br>✅ Enable the User.Read checkbox and use "Revoke & Re-login" to get a token with the required scope.</div>
+                        </div>`;
+                    return;
+                }
+
                 if (!response.ok) {
-                    if (response.status === 401) {
-                        throw new Error('Unauthorized - token may be expired');
-                    }
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    throw new Error(`API returned ${response.status}: ${response.statusText}`);
                 }
 
                 const data = await response.json();
-                apiResponseEl.textContent = JSON.stringify(data, null, 2);
-            } catch (e) {
-                apiResponseEl.textContent = 'Error: ' + e.message;
+
+                // Display the API response
+                const apiClaims = [
+                    { label: '✅ API Call Status', value: 'Success' },
+                    { label: 'Is Authenticated', value: data.isAuthenticated ? 'Yes' : 'No' },
+                    { label: 'Name', value: data.name },
+                    { label: 'Scopes from Token', value: data.scopes?.join(', ') || 'None' }
+                ];
+
+                // Add all claims from the API response
+                if (data.claims) {
+                    Object.entries(data.claims).forEach(([key, value]) => {
+                        apiClaims.push({ label: key, value: value });
+                    });
+                }
+
+                infoList.innerHTML = apiClaims
+                    .map(c => `
+                        <div class="claim-item">
+                            <div class="claim-type">${c.label}</div>
+                            <div class="claim-value">${c.value || '<em style="color: #a0aec0;">Not available</em>'}</div>
+                        </div>
+                    `).join('');
+
+            } catch (error) {
+                infoList.innerHTML = `
+                    <div class="claim-item">
+                        <div class="claim-type" style="color: #e53e3e;">❌ Error</div>
+                        <div class="claim-value">${error.message}</div>
+                    </div>`;
             }
         }
 
@@ -567,46 +692,33 @@
             const statusText = document.getElementById('statusText');
             const loginBtn = document.getElementById('loginBtn');
             const logoutBtn = document.getElementById('logoutBtn');
+            const revokeBtn = document.getElementById('revokeBtn');
             const userInfo = document.getElementById('userInfo');
+            const scopeOptions = document.getElementById('scopeOptions');
 
             if (isAuthenticated && tokenClaims) {
                 statusIndicator.className = 'status-indicator authenticated';
                 statusText.textContent = 'Authenticated';
                 loginBtn.style.display = 'none';
                 logoutBtn.style.display = 'inline-block';
+                revokeBtn.style.display = 'inline-block';
                 userInfo.className = 'user-info visible';
+                scopeOptions.style.display = 'none';
 
                 // Update user info
                 document.getElementById('userName').textContent = tokenClaims.name || '-';
                 document.getElementById('userEmail').textContent = tokenClaims.preferred_username || tokenClaims.email || '-';
-                document.getElementById('userOid').textContent = tokenClaims.oid || tokenClaims.sub || '-';
 
-                // Update scopes
-                const scopesList = document.getElementById('scopesList');
-                scopesList.innerHTML = grantedScopes
-                    .filter(s => !['openid', 'profile', 'email'].includes(s))
-                    .map(s => `<span class="scope-item">${s}</span>`)
-                    .join('');
-
-                if (scopesList.innerHTML === '') {
-                    scopesList.innerHTML = '<span class="scope-item">No API scopes granted</span>';
-                }
-
-                // Update claims list
-                const claimsList = document.getElementById('claimsList');
-                claimsList.innerHTML = Object.entries(tokenClaims)
-                    .map(([key, value]) => `
-                        <div class="claim-item">
-                            <div class="claim-type">${key}</div>
-                            <div class="claim-value">${typeof value === 'object' ? JSON.stringify(value) : value}</div>
-                        </div>
-                    `).join('');
+                // Hide info container on fresh login
+                document.getElementById('userInfoContainer').style.display = 'none';
             } else {
                 statusIndicator.className = 'status-indicator unauthenticated';
                 statusText.textContent = 'Not Authenticated';
                 loginBtn.style.display = 'inline-block';
                 logoutBtn.style.display = 'none';
+                revokeBtn.style.display = 'none';
                 userInfo.className = 'user-info';
+                scopeOptions.style.display = 'block';
             }
         }
 

@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Identity.Web;
+using Microsoft.IdentityModel.Logging;
 using Microsoft.OpenApi.Models;
 using SimpleDotnetService.Services;
 using SimpleDotnetService.Services.Ip;
@@ -7,9 +8,36 @@ using SimpleDotnetService.Proxies;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add Azure AD authentication
+// Enable PII logging for debugging (disable in production)
+IdentityModelEventSource.ShowPII = true;
+
+// Add Azure AD authentication with custom audience validation
+var azureAdSection = builder.Configuration.GetSection("AzureAd");
+var clientId = azureAdSection["ClientId"];
+
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddMicrosoftIdentityWebApi(builder.Configuration.GetSection("AzureAd"));
+    .AddMicrosoftIdentityWebApi(azureAdSection)
+    .EnableTokenAcquisitionToCallDownstreamApi()
+    .AddInMemoryTokenCaches();
+
+// Configure JWT Bearer to accept multiple audiences
+builder.Services.Configure<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme, options =>
+{
+    var existingValidator = options.TokenValidationParameters.AudienceValidator;
+    options.TokenValidationParameters.AudienceValidator = (audiences, token, parameters) =>
+    {
+        // Accept both api://ClientId and just ClientId as valid audiences
+        var validAudiences = new[] { $"api://{clientId}", clientId };
+        foreach (var audience in audiences)
+        {
+            if (validAudiences.Contains(audience))
+            {
+                return true;
+            }
+        }
+        return false;
+    };
+});
 
 // Add services to the container.
 builder.Services.AddEndpointsApiExplorer();
@@ -39,6 +67,10 @@ builder.Services.AddSwaggerGen(options =>
                 Scopes = new Dictionary<string, string>
                 {
                     { $"api://{clientId}/User.Read", "Read user information" }
+                },
+                Extensions = new Dictionary<string, Microsoft.OpenApi.Interfaces.IOpenApiExtension>
+                {
+                    { "x-usePkce", new Microsoft.OpenApi.Any.OpenApiBoolean(true) }
                 }
             }
         }

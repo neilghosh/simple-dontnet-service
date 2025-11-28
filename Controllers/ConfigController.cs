@@ -30,7 +30,8 @@ namespace SimpleDotnetService.Controllers
 
                 var clientId = configuration["AzureAd:ClientId"] ?? "";
                 var tenantId = configuration["AzureAd:TenantId"] ?? "consumers";
-                var scopes = configuration["AzureAd:Scopes"]?.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                // Use FullScopes for the frontend (includes api:// prefix), fall back to building it
+                var scopes = configuration["AzureAd:FullScopes"]?.Split(' ', StringSplitOptions.RemoveEmptyEntries)
                     ?? new[] { $"api://{clientId}/User.Read" };
 
                 var config = new AzureAdConfig

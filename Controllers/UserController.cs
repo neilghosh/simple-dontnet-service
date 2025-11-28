@@ -1,10 +1,13 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Identity.Web.Resource;
 
 namespace SimpleDotnetService.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
+    [RequiredScope(RequiredScopesConfigurationKey = "AzureAd:Scopes")]
     public class UserController : ControllerBase
     {
         private readonly ILogger<UserController> logger;
@@ -16,13 +19,13 @@ namespace SimpleDotnetService.Controllers
 
         /// <summary>
         /// Gets the claims from the authenticated user's token.
-        /// Requires a valid Azure AD bearer token.
+        /// Requires a valid Azure AD bearer token with User.Read scope.
         /// </summary>
         /// <returns>A dictionary of claims from the authenticated user's token</returns>
         [HttpGet("claims")]
-        [Authorize]
         [ProducesResponseType(typeof(ClaimsResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
         public IActionResult GetClaims()
         {
             try
